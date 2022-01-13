@@ -55,13 +55,13 @@ FILE *debug_file = NULL;
 #define ICON_STATUS_FOLDED   "▼ "
 #define ICON_ROOT_DIR        "/"
 
-#define RETURN_ON_TB_ERROR(func_call, msg)               \
-    do {                                                 \
-        int ret;                                         \
-        if ((ret = (func_call)) != TB_OK) {              \
-            set_errorf("%s: %s", msg, tb_strerror(ret)); \
-            return 1;                                    \
-        }                                                \
+#define RETURN_ON_TB_ERROR(func_call, msg)                 \
+    do {                                                   \
+        int ret = (func_call);                             \
+        if (ret != TB_OK && ret != TB_ERR_OUT_OF_BOUNDS) { \
+            set_errorf("%s: %s", msg, tb_strerror(ret));   \
+            return 1;                                      \
+        }                                                  \
     } while (0);
 
 #define RETURN_ON_ERROR(func_call) \
