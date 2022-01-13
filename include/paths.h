@@ -39,6 +39,7 @@ typedef struct Path {
     char *line;
     PathState state;
     unsigned depth;
+    PathLink mainpath;
     cvector_vector_type(PathLink) subpaths;
 } Path;
 
@@ -47,10 +48,12 @@ typedef struct UnfoldedPaths {
     size_t len;
 } UnfoldedPaths;
 
+char *get_full_path(Path *p);
 Path *get_path_from_link(PathLink link);
 size_t get_paths(UnfoldedPaths *unfolded_paths, char **lines, size_t lines_l);
 size_t unfold_path(UnfoldedPaths *unfolded_paths, size_t i);
 void fold_path(UnfoldedPaths *unfolded_paths, size_t i);
+void free_full_path(char *str);
 void free_paths(UnfoldedPaths unfolded_paths);
 
 #endif

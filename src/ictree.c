@@ -21,7 +21,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/wait.h>
 #include <termbox.h>
+#include <unistd.h>
 
 #include "lines.h"
 #include "paths.h"
@@ -56,6 +58,8 @@ FILE *debug_file = NULL;
 #define ICON_ROOT_DIR        "/"
 
 #define PROMPT_MAX_LEN 255
+
+#define FAILED_TO_COPY_ERR_MSG "Failed to copy"
 
 #define RETURN_ON_TB_ERROR(func_call, msg)                 \
     do {                                                   \
@@ -119,6 +123,7 @@ static void cleanup_lines(void);
 static void cleanup_paths(void);
 static void cleanup_termbox(void);
 static void cleanup(void);
+static void copy_path(void);
 static void cursor_move(int i);
 static void cursor_set(long p);
 static void print_error(char *error_msg);
@@ -416,6 +421,8 @@ static UpdScrSignal handle_key(struct tb_event ev)
         CONTROL_ACTION(cursor_set(0));
     case 'G':
         CONTROL_ACTION(cursor_set(MAX_PATHS - 1));
+    case 'y':
+        CONTROL_ACTION(copy_path());
     }
 
     return UpdScrSignalNo;
@@ -445,6 +452,75 @@ static UpdScrSignal handle_mouse_click(int x, int y)
     cursor_set(p);
     toggle_fold();
     return UpdScrSignalYes;
+}
+
+static void copy_path(void)
+{
+    char *full_path = NULL;
+    char *args[] = { "/bin/sh", "-c", "xsel --clipboard", NULL };
+
+    int fd[2], fd_r, fd_w;
+    if (pipe(fd) == -1) {
+        set_prompt_msg_err(FAILED_TO_COPY_ERR_MSG ": pipe() failed");
+        goto cleanup;
+    }
+
+    fd_r = fd[0];
+    fd_w = fd[1];
+
+    int pid = fork();
+    if (pid == -1) {
+        set_prompt_msg_err(FAILED_TO_COPY_ERR_MSG ": fork() failed");
+        goto cleanup;
+    } else if (pid == 0) {
+        close(fd_w);
+
+        /* Supress all output to prevent xsel from messing up the UI */
+        int null = open("/dev/null", O_WRONLY);
+        dup2(null, STDOUT_FILENO);
+        dup2(null, STDERR_FILENO);
+        close(null);
+
+        dup2(fd_r, STDIN_FILENO);
+        close(fd_r);
+
+        execv(args[0], args);
+        exit(EXIT_FAILURE);
+    }
+
+    close(fd_r);
+
+    int status;
+    Path *p = get_path_from_link(paths.links[cursor_pos]);
+    full_path = get_full_path(p);
+
+    if (write(fd_w, full_path, strlen(full_path) + 1) == -1) {
+        set_prompt_msg_err(FAILED_TO_COPY_ERR_MSG ": write() failed");
+    }
+    close(fd_w);
+
+    if (waitpid(pid, &status, 0) == -1) {
+        set_prompt_msg_err(FAILED_TO_COPY_ERR_MSG ": waitpid() failed");
+        goto cleanup;
+    }
+
+    if (WIFEXITED(status)) {
+        int es = WEXITSTATUS(status);
+        if (es == 127) {
+            set_prompt_msg_errf(FAILED_TO_COPY_ERR_MSG ": xsel not found", es);
+            goto cleanup;
+        } else if (es != 0) {
+            set_prompt_msg_errf(FAILED_TO_COPY_ERR_MSG ": exited with code %d", es);
+            goto cleanup;
+        }
+    }
+
+    set_prompt_msgf("Copied: %s", full_path);
+
+cleanup:
+    if (full_path != NULL) {
+        free_full_path(full_path);
+    }
 }
 
 static int run(void)

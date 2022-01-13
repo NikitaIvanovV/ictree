@@ -126,6 +126,44 @@ end:
     p->state = PathStateFolded;
 }
 
+char *get_full_path(Path *p)
+{
+    PathLink mainpath_l;
+    unsigned long str_l;
+    cvector_vector_type(Path *) stack = NULL;
+
+    while (1) {
+        cvector_push_back(stack, p);
+        mainpath_l = p->mainpath;
+        if (mainpath_l.index == (size_t)-1)
+            break;
+        p = get_path_from_link(mainpath_l);
+    }
+
+    str_l = 0;
+    for (long i = cvector_size(stack) - 1; i >= 0; i--) {
+        str_l += strlen(stack[i]->line);
+        str_l += 1; /* For dir delimeter */
+    }
+
+    char *str = malloc((str_l + 1) * sizeof(char));
+    str[0] = '\0';
+
+    for (long i = cvector_size(stack) - 1; i >= 0; i--) {
+        strcat(str, stack[i]->line);
+        strcat(str, "/");
+    }
+
+    cvector_free(stack);
+
+    return str;
+}
+
+void free_full_path(char *str)
+{
+    free(str);
+}
+
 size_t get_paths(UnfoldedPaths *unfolded_paths, char **lines, size_t lines_l)
 {
     Path p;
@@ -170,6 +208,7 @@ size_t get_paths(UnfoldedPaths *unfolded_paths, char **lines, size_t lines_l)
 
         p.line = line;
         p.subpaths = NULL;
+        p.mainpath = (PathLink){ -1 };
         p.state = PATH_DEFAULT_STATE;
         p.depth = depth;
         pl = (PathLink){cvector_size(paths)};
@@ -183,8 +222,10 @@ size_t get_paths(UnfoldedPaths *unfolded_paths, char **lines, size_t lines_l)
         }
 
         if (cvector_size(stack) > 0) {
-            Path *mainpath = get_path_from_link(stack[cvector_size(stack) - 1]);
+            PathLink mainpath_l = stack[cvector_size(stack) - 1];
+            Path *mainpath = get_path_from_link(mainpath_l);
             cvector_push_back(mainpath->subpaths, pl);
+            p.mainpath = mainpath_l;
             if (mainpath->state == PathStateUnfolded) {
                 cvector_push_back(unfolded_paths->links, pl);
             }
