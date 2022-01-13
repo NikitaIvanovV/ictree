@@ -26,6 +26,14 @@
 #define MAX(a, b) ((a > b) ? a : b)
 #define MIN(a, b) ((a < b) ? a : b)
 
+#define FORMATTED_STRING(msg, format)              \
+    do {                                           \
+        va_list args;                              \
+        va_start(args, format);                    \
+        vsnprintf(msg, sizeof(msg), format, args); \
+        va_end(args);                              \
+    } while (0);
+
 size_t find_first_nonblank(char *string);
 
 #endif

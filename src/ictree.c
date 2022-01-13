@@ -55,6 +55,8 @@ FILE *debug_file = NULL;
 #define ICON_STATUS_FOLDED   "▼ "
 #define ICON_ROOT_DIR        "/"
 
+#define PROMPT_MAX_LEN 255
+
 #define RETURN_ON_TB_ERROR(func_call, msg)                 \
     do {                                                   \
         int ret = (func_call);                             \
@@ -80,6 +82,11 @@ typedef enum UpdScrSignal {
     UpdScrSignalYes = 1,
 } UpdScrSignal;
 
+typedef struct PromptMsg {
+    char msg[PROMPT_MAX_LEN + 1];
+    uint32_t fg, bg;
+} PromptMsg;
+
 static char *program_path = NULL;
 
 static FILE *stream = NULL;
@@ -92,6 +99,8 @@ static size_t total_paths_l = 0;
 
 static Pos pager_pos = {0, 0};
 static long cursor_pos = 0;
+
+static PromptMsg prompt_msg;
 
 static int running = 1;
 
@@ -114,9 +123,14 @@ static void cursor_move(int i);
 static void cursor_set(long p);
 static void print_error(char *error_msg);
 static void print_errorf(char *format, ...);
+static void reset_prompt_msg(void);
 static void scroll_x(int i);
 static void scroll_y(int i);
 static void scroll_y_raw(int i);
+static void set_prompt_msg(char *msg);
+static void set_prompt_msg_err(char *msg);
+static void set_prompt_msg_errf(char *format, ...);
+static void set_prompt_msgf(char *format, ...);
 static void toggle_fold(void);
 
 static void print_error(char *error_msg)
@@ -126,12 +140,45 @@ static void print_error(char *error_msg)
 
 static void print_errorf(char *format, ...)
 {
-    va_list args;
     char msg[ERROR_BUF_SIZE];
-    va_start(args, format);
-    vsnprintf(msg, ERROR_BUF_SIZE, format, args);
-    va_end(args);
+    FORMATTED_STRING(msg, format);
     print_error(msg);
+}
+
+static void reset_prompt_msg(void)
+{
+    prompt_msg.msg[0] = '\0';
+    memset(prompt_msg.msg, ' ', PROMPT_MAX_LEN);
+    prompt_msg.msg[PROMPT_MAX_LEN] = '\0';
+    prompt_msg.bg = TB_WHITE;
+    prompt_msg.fg = TB_BLACK;
+}
+
+static void set_prompt_msg(char *msg)
+{
+    reset_prompt_msg();
+    memcpy(prompt_msg.msg, msg, MIN(strlen(msg), PROMPT_MAX_LEN));
+}
+
+static void set_prompt_msgf(char *format, ...)
+{
+    char msg[PROMPT_MAX_LEN];
+    FORMATTED_STRING(msg, format);
+    set_prompt_msg(msg);
+}
+
+static void set_prompt_msg_err(char *msg)
+{
+    set_prompt_msg(msg);
+    prompt_msg.bg = TB_RED;
+    prompt_msg.fg = TB_WHITE;
+}
+
+static void set_prompt_msg_errf(char *format, ...)
+{
+    char msg[PROMPT_MAX_LEN];
+    FORMATTED_STRING(msg, format);
+    set_prompt_msg_err(msg);
 }
 
 static void scroll_x(int i)
@@ -281,13 +328,22 @@ static int draw(void)
 
     /* Draw prompt */
 
-    char ind[SCREEN_X];
-    snprintf(ind, SCREEN_X, "%ld/%ld", paths.links[cursor_pos].index + 1, total_paths_l);
-    x = TREE_VIEW_X - strlen(ind);
+    x = 0;
     y = TREE_VIEW_Y + PROMPT_HEIGHT - 1;
+
+    fg = prompt_msg.fg;
+    bg = prompt_msg.bg;
+
     RETURN_ON_TB_ERROR(
-            tb_print(x, y, TB_WHITE, TB_DEFAULT, ind),
-            "failed to print prompt");
+            tb_print(x, y, fg, bg, prompt_msg.msg),
+            "failed to print prompt message");
+
+    char ind[PROMPT_MAX_LEN];
+    snprintf(ind, PROMPT_MAX_LEN, "   %ld/%ld", paths.links[cursor_pos].index + 1, total_paths_l);
+    x = TREE_VIEW_X - strlen(ind);
+    RETURN_ON_TB_ERROR(
+            tb_print(x, y, fg, bg, ind),
+            "failed to print prompt message");
 
     return 0;
 }
@@ -396,6 +452,8 @@ static int run(void)
     int ret;
     struct tb_event ev;
 
+    reset_prompt_msg();
+
     RETURN_ON_ERROR(update_screen());
 
     while (1) {
@@ -409,11 +467,13 @@ static int run(void)
         case TB_EVENT_KEY:
             if (handle_key(ev) == UpdScrSignalYes) {
                 RETURN_ON_ERROR(update_screen());
+                reset_prompt_msg();
             }
             break;
         case TB_EVENT_MOUSE:
             if (handle_mouse(ev) == UpdScrSignalYes) {
                 RETURN_ON_ERROR(update_screen());
+                reset_prompt_msg();
             }
             break;
         case TB_EVENT_RESIZE:
