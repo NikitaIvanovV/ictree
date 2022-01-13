@@ -28,7 +28,7 @@ static cvector_vector_type(Path) paths;
 
 /*
  * Find length of the first component path component
-*/
+ */
 static unsigned long get_first_component_length(char *path)
 {
     char c;
@@ -152,6 +152,12 @@ size_t get_paths(UnfoldedPaths *unfolded_paths, char **lines, size_t lines_l)
         comp_len = get_first_component_length(line);
 
         line_off += comp_len + 1;
+
+        if (strlen(line) == 0 && depth > 0) {
+            i++;
+            line_off = 0;
+            continue;
+        }
 
         /* If it's the last component of path, start processing next line.
          * Otherwise replace DIR_DELIM with 0 to make a new string */
