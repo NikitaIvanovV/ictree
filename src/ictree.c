@@ -28,7 +28,7 @@ FILE *debug_file = NULL;
 #define TREE_VIEW_TOP pager_pos.y
 #define TREE_VIEW_MID (pager_pos.y + (TREE_VIEW_Y / 2))
 #define TREE_VIEW_BOT (pager_pos.y + TREE_VIEW_Y - 1)
-#define MAX_PATHS ((long)paths.len)
+#define MAX_PATHS     ((long)paths.len)
 
 #define INDENT               2
 #define ICON_STATUS_LEN      2
@@ -57,6 +57,11 @@ typedef struct Pos {
     long x, y;
 } Pos;
 
+typedef enum UpdScrSignal {
+    UpdScrSignalNo  = 0,
+    UpdScrSignalYes = 1,
+} UpdScrSignal;
+
 static char *program_path = NULL;
 
 static char **lines = NULL;
@@ -71,12 +76,12 @@ static int running = 1;
 
 static int draw(void);
 static int fold(void);
-static int handle_key(struct tb_event ev);
-static int handle_mouse_click(int x, int y);
-static int handle_mouse(struct tb_event ev);
 static int run(void);
 static int unfold(void);
 static int update_screen(void);
+static UpdScrSignal handle_key(struct tb_event ev);
+static UpdScrSignal handle_mouse_click(int x, int y);
+static UpdScrSignal handle_mouse(struct tb_event ev);
 static void catch_error(int signo);
 static void center_cursor(void);
 static void cleanup_lines_list(void);
@@ -279,16 +284,16 @@ static int update_screen(void)
     return 0;
 }
 
-#define CONTROL_ACTION(action) \
-    do {                       \
-        action;                \
-        return 1;              \
+#define CONTROL_ACTION(action)  \
+    do {                        \
+        action;                 \
+        return UpdScrSignalYes; \
     } while (0)
 
 #define SCROLL_X 4
 #define SCROLL_Y 1
 
-static int handle_key(struct tb_event ev)
+static UpdScrSignal handle_key(struct tb_event ev)
 {
     switch (ev.key) {
     case TB_KEY_CTRL_E:
@@ -334,10 +339,10 @@ static int handle_key(struct tb_event ev)
         CONTROL_ACTION(cursor_set(MAX_PATHS - 1));
     }
 
-    return 0;
+    return UpdScrSignalNo;
 }
 
-static int handle_mouse(struct tb_event ev)
+static UpdScrSignal handle_mouse(struct tb_event ev)
 {
     switch (ev.key) {
     case TB_KEY_MOUSE_LEFT:
@@ -348,17 +353,19 @@ static int handle_mouse(struct tb_event ev)
         CONTROL_ACTION(scroll_y(-SCROLL_Y));
     }
 
-    return 0;
+    return UpdScrSignalNo;
 }
 
-static int handle_mouse_click(int x, int y)
+static UpdScrSignal handle_mouse_click(int x, int y)
 {
     long p = TREE_VIEW_TOP + y;
+
     if (p < 0 || p >= MAX_PATHS || y >= TREE_VIEW_Y)
-        return 0;
+        return UpdScrSignalNo;
+
     cursor_set(p);
     toggle_fold();
-    return 1;
+    return UpdScrSignalYes;
 }
 
 static int run(void)
@@ -377,12 +384,12 @@ static int run(void)
         }
         switch (ev.type) {
         case TB_EVENT_KEY:
-            if (handle_key(ev) == 1) {
+            if (handle_key(ev) == UpdScrSignalYes) {
                 RETURN_ON_ERROR(update_screen());
             }
             break;
         case TB_EVENT_MOUSE:
-            if (handle_mouse(ev) == 1) {
+            if (handle_mouse(ev) == UpdScrSignalYes) {
                 RETURN_ON_ERROR(update_screen());
             }
             break;
