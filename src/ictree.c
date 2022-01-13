@@ -37,6 +37,22 @@ FILE *debug_file = NULL;
 #define ICON_STATUS_FOLDED   "▼ "
 #define ICON_ROOT_DIR        "/"
 
+#define RETURN_ON_TB_ERROR(func_call, msg)  \
+    do {                                    \
+        int ret;                            \
+        if ((ret = (func_call)) != TB_OK) { \
+            set_errorf("%s: %d", msg, ret); \
+            return 1;                       \
+        }                                   \
+    } while (0);
+
+#define RETURN_ON_ERROR(func_call) \
+    do {                           \
+        if ((func_call) != 0) {    \
+            return 1;              \
+        }                          \
+    } while (0);
+
 typedef struct Pos {
     long x, y;
 } Pos;
@@ -53,12 +69,14 @@ static long cursor_pos = 0;
 
 static int running = 1;
 
+static int draw(void);
 static int fold(void);
 static int handle_key(struct tb_event ev);
 static int handle_mouse_click(int x, int y);
 static int handle_mouse(struct tb_event ev);
 static int run(void);
 static int unfold(void);
+static int update_screen(void);
 static void catch_error(int signo);
 static void center_cursor(void);
 static void cleanup_lines_list(void);
@@ -66,14 +84,12 @@ static void cleanup_paths(void);
 static void cleanup(void);
 static void cursor_move(int i);
 static void cursor_set(long p);
-static void draw(void);
 static void print_error(char *error_msg);
 static void print_errorf(char *format, ...);
 static void scroll_x(int i);
 static void scroll_y(int i);
 static void scroll_y_raw(int i);
 static void toggle_fold(void);
-static void update_screen(void);
 
 static void print_error(char *error_msg)
 {
@@ -159,7 +175,7 @@ static void toggle_fold(void)
     }
 }
 
-static void draw(void)
+static int draw(void)
 {
     Path *path;
     char *path_line, *status_icon;
@@ -221,11 +237,17 @@ static void draw(void)
             }
         }
 
-        tb_printf(x, y, fg, bg, "%s%s", status_icon, path_line + char_off);
+        RETURN_ON_TB_ERROR(
+                tb_printf(x, y, fg, bg, "%s%s", status_icon, path_line + char_off),
+                "failed to print path");
         if (x + strlen(path->line) >= (unsigned long)TREE_VIEW_X)
-            tb_set_cell(TREE_VIEW_X - 1, y, '>', TB_BLACK, TB_WHITE);
+            RETURN_ON_TB_ERROR(
+                    tb_set_cell(TREE_VIEW_X - 1, y, '>', TB_BLACK, TB_WHITE),
+                    "failed to print '>' symbol");
         if (char_off > 0)
-            tb_set_cell(0, y, '<', TB_BLACK, TB_WHITE);
+            RETURN_ON_TB_ERROR(
+                    tb_set_cell(0, y, '<', TB_BLACK, TB_WHITE),
+                    "failed to print '<' symbol");
         y++;
     }
 
@@ -235,14 +257,26 @@ static void draw(void)
     snprintf(ind, SCREEN_X, "%ld/%ld", paths.links[cursor_pos].index + 1, total_paths_l);
     x = TREE_VIEW_X - strlen(ind);
     y = TREE_VIEW_Y + PROMPT_HEIGHT - 1;
-    tb_print(x, y, TB_WHITE, TB_DEFAULT, ind);
+    RETURN_ON_TB_ERROR(
+            tb_print(x, y, TB_WHITE, TB_DEFAULT, ind),
+            "failed to print prompt");
+
+    return 0;
 }
 
-static void update_screen(void)
+static int update_screen(void)
 {
-    tb_clear();
-    draw();
-    tb_present();
+    RETURN_ON_TB_ERROR(
+            tb_clear(),
+            "failed to clear screen");
+
+    RETURN_ON_ERROR(draw());
+
+    RETURN_ON_TB_ERROR(
+        tb_present(),
+        "failed to synchronize the internal buffer with the terminal");
+
+    return 0;
 }
 
 #define CONTROL_ACTION(action) \
@@ -332,7 +366,7 @@ static int run(void)
     int ret;
     struct tb_event ev;
 
-    update_screen();
+    RETURN_ON_ERROR(update_screen());
 
     while (1) {
         if ((ret = tb_poll_event(&ev)) != TB_OK) {
@@ -344,16 +378,16 @@ static int run(void)
         switch (ev.type) {
         case TB_EVENT_KEY:
             if (handle_key(ev) == 1) {
-                update_screen();
+                RETURN_ON_ERROR(update_screen());
             }
             break;
         case TB_EVENT_MOUSE:
             if (handle_mouse(ev) == 1) {
-                update_screen();
+                RETURN_ON_ERROR(update_screen());
             }
             break;
         case TB_EVENT_RESIZE:
-            update_screen();
+            RETURN_ON_ERROR(update_screen());
             break;
         }
         if (running != 1) {
