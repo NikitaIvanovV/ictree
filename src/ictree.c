@@ -55,13 +55,13 @@ FILE *debug_file = NULL;
 #define ICON_STATUS_FOLDED   "▼ "
 #define ICON_ROOT_DIR        "/"
 
-#define RETURN_ON_TB_ERROR(func_call, msg)  \
-    do {                                    \
-        int ret;                            \
-        if ((ret = (func_call)) != TB_OK) { \
-            set_errorf("%s: %d", msg, ret); \
-            return 1;                       \
-        }                                   \
+#define RETURN_ON_TB_ERROR(func_call, msg)               \
+    do {                                                 \
+        int ret;                                         \
+        if ((ret = (func_call)) != TB_OK) {              \
+            set_errorf("%s: %s", msg, tb_strerror(ret)); \
+            return 1;                                    \
+        }                                                \
     } while (0);
 
 #define RETURN_ON_ERROR(func_call) \
@@ -82,6 +82,9 @@ typedef enum UpdScrSignal {
 
 static char *program_path = NULL;
 
+static FILE *stream = NULL;
+static int stream_file = 0;
+
 static char **lines = NULL;
 static size_t lines_l = 0;
 static UnfoldedPaths paths = { .links = NULL, .len = 0 };
@@ -94,6 +97,7 @@ static int running = 1;
 
 static int draw(void);
 static int fold(void);
+static int process_arg(char *arg);
 static int run(void);
 static int unfold(void);
 static int update_screen(void);
@@ -102,8 +106,9 @@ static UpdScrSignal handle_mouse_click(int x, int y);
 static UpdScrSignal handle_mouse(struct tb_event ev);
 static void catch_error(int signo);
 static void center_cursor(void);
-static void cleanup_lines_list(void);
+static void cleanup_lines(void);
 static void cleanup_paths(void);
+static void cleanup_termbox(void);
 static void cleanup(void);
 static void cursor_move(int i);
 static void cursor_set(long p);
@@ -131,7 +136,7 @@ static void print_errorf(char *format, ...)
 
 static void scroll_x(int i)
 {
-    pager_pos.x += i;
+    pager_pos.x = MAX(0, pager_pos.x + i);
 }
 
 static void scroll_y(int i)
@@ -397,7 +402,7 @@ static int run(void)
         if ((ret = tb_poll_event(&ev)) != TB_OK) {
             if (ret == TB_ERR_POLL && tb_last_errno() == EINTR)
                 continue;
-            set_errorf("failed to poll termbox event: %d", ret);
+            set_errorf("failed to poll termbox event: %s", tb_strerror(ret));
             return 1;
         }
         switch (ev.type) {
@@ -423,15 +428,37 @@ static int run(void)
     return 0;
 }
 
+static int process_arg(char *arg)
+{
+    int ret;
+
+    errno = 0;
+    FILE *f = fopen(arg, "r");
+    ret = errno;
+
+    if (f == NULL) {
+        if (errno == ENOENT) {
+            set_errorf("file '%s' does not exist", arg);
+        } else {
+            set_errorf("failed to open file '%s': %d", arg, ret);
+        }
+        return 1;
+    }
+
+    stream = f;
+    stream_file = 1;
+    return 0;
+}
+
 static void cleanup_termbox(void)
 {
     int ret = tb_shutdown();
     if (ret == TB_OK || ret == TB_ERR_NOT_INIT)
         return;
-    print_errorf("failed to shutdown termbox: %d", ret);
+    print_errorf("failed to shutdown termbox: %s", tb_strerror(ret));
 }
 
-static void cleanup_lines_list(void)
+static void cleanup_lines(void)
 {
     if (lines == NULL)
         return;
@@ -449,7 +476,10 @@ static void cleanup(void)
 {
     cleanup_termbox();
     cleanup_paths();
-    cleanup_lines_list();
+    cleanup_lines();
+    if (stream_file) {
+        fclose(stream);
+    }
 #ifdef DEV
     if (debug_file != NULL)
         fclose(debug_file);
@@ -464,8 +494,15 @@ static void catch_error(int signo)
 int main(int argc, char *argv[])
 {
     int ret;
-    FILE *stream = stdin;
     program_path = argc >= 1 ? argv[0] : "ictree";
+    stream = stdin;
+
+    if (argc > 1) {
+        if (process_arg(argv[1]) != 0) {
+            print_error(get_error());
+            return EXIT_FAILURE;
+        }
+    }
 
     if (signal(SIGABRT, catch_error) == SIG_ERR) {
         print_error("failed to setup abort signal");
@@ -492,7 +529,7 @@ int main(int argc, char *argv[])
 
     /* Setup termbox */
     if ((ret = tb_init()) != TB_OK) {
-        print_errorf("failed to init termbox: %d", ret);
+        print_errorf("failed to init termbox: %s", tb_strerror(ret));
         cleanup();
         return EXIT_FAILURE;
     }
