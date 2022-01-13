@@ -405,6 +405,14 @@ static int run(void)
     return 0;
 }
 
+static void cleanup_termbox(void)
+{
+    int ret = tb_shutdown();
+    if (ret == TB_OK || ret == TB_ERR_NOT_INIT)
+        return;
+    print_errorf("failed to shutdown termbox: %d", ret);
+}
+
 static void cleanup_lines_list(void)
 {
     if (lines == NULL)
@@ -421,7 +429,7 @@ static void cleanup_paths(void)
 
 static void cleanup(void)
 {
-    tb_shutdown();
+    cleanup_termbox();
     cleanup_paths();
     cleanup_lines_list();
 #ifdef DEV
@@ -432,7 +440,7 @@ static void cleanup(void)
 
 static void catch_error(int signo)
 {
-    tb_shutdown();
+    cleanup_termbox();
 }
 
 int main(int argc, char *argv[])
