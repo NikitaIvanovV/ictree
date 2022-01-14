@@ -155,7 +155,6 @@ static void print_errorf(char *format, ...)
 
 static void reset_prompt_msg(void)
 {
-    prompt_msg.msg[0] = '\0';
     memset(prompt_msg.msg, ' ', PROMPT_MAX_LEN);
     prompt_msg.msg[PROMPT_MAX_LEN] = '\0';
     prompt_msg.bg = TB_WHITE;
