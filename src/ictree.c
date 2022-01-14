@@ -25,6 +25,7 @@
 #include <termbox.h>
 #include <unistd.h>
 
+#include "args.h"
 #include "lines.h"
 #include "paths.h"
 #include "utils.h"
@@ -91,6 +92,8 @@ typedef struct PromptMsg {
     uint32_t fg, bg;
 } PromptMsg;
 
+char *filename = NULL;
+
 static char *program_path = NULL;
 
 static FILE *stream = NULL;
@@ -110,7 +113,7 @@ static int running = 1;
 
 static int draw(void);
 static int fold(void);
-static int process_arg(char *arg);
+static int open_file(char *name);
 static int run(void);
 static int unfold(void);
 static int update_screen(void);
@@ -564,19 +567,19 @@ static int run(void)
     return 0;
 }
 
-static int process_arg(char *arg)
+static int open_file(char *name)
 {
     int ret;
 
     errno = 0;
-    FILE *f = fopen(arg, "r");
+    FILE *f = fopen(name, "r");
     ret = errno;
 
     if (f == NULL) {
         if (errno == ENOENT) {
-            set_errorf("file '%s' does not exist", arg);
+            set_errorf("file '%s' does not exist", name);
         } else {
-            set_errorf("failed to open file '%s': %d", arg, ret);
+            set_errorf("failed to open file '%s': %d", name, ret);
         }
         return 1;
     }
@@ -633,8 +636,17 @@ int main(int argc, char *argv[])
     program_path = argc >= 1 ? argv[0] : "ictree";
     stream = stdin;
 
-    if (argc > 1) {
-        if (process_arg(argv[1]) != 0) {
+    ret = process_args(argc, argv);
+    switch (ret) {
+    case ArgActionError:
+        print_error(get_error());
+        return EXIT_FAILURE;
+    case ArgActionExit:
+        return EXIT_SUCCESS;
+    }
+
+    if (filename != NULL) {
+        if (open_file(filename) != 0) {
             print_error(get_error());
             return EXIT_FAILURE;
         }
