@@ -21,6 +21,7 @@
 #include <string.h>
 
 #include "error.h"
+#include "utils.h"
 
 static char error_buf[ERROR_BUF_SIZE];
 
@@ -31,11 +32,8 @@ void set_error(char *buf)
 
 void set_errorf(char *format, ...)
 {
-    va_list args;
     char msg[ERROR_BUF_SIZE];
-    va_start(args, format);
-    vsnprintf(msg, ERROR_BUF_SIZE, format, args);
-    va_end(args);
+    FORMATTED_STRING(msg, format);
     set_error(msg);
 }
 
