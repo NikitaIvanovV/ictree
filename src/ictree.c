@@ -60,8 +60,6 @@ FILE *debug_file = NULL;
 
 #define PROMPT_MAX_LEN 255
 
-#define FAILED_TO_COPY_ERR_MSG "Failed to copy"
-
 #define RETURN_ON_TB_ERROR(func_call, msg)                 \
     do {                                                   \
         int ret = (func_call);                             \
@@ -456,6 +454,8 @@ static UpdScrSignal handle_mouse_click(int x, int y)
     return UpdScrSignalYes;
 }
 
+#define FAILED_TO_COPY_ERR_MSG "Failed to copy"
+
 static void copy_path(void)
 {
     char *full_path = NULL;
@@ -498,6 +498,7 @@ static void copy_path(void)
 
     if (write(fd_w, full_path, strlen(full_path) + 1) == -1) {
         set_prompt_msg_err(FAILED_TO_COPY_ERR_MSG ": write() failed");
+        goto cleanup;
     }
     close(fd_w);
 
