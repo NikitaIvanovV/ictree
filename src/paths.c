@@ -151,7 +151,8 @@ char *get_full_path(Path *p)
 
     for (long i = cvector_size(stack) - 1; i >= 0; i--) {
         strcat(str, stack[i]->line);
-        strcat(str, "/");
+        if (i > 0)
+            strcat(str, "/");
     }
 
     cvector_free(stack);
