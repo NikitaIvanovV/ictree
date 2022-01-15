@@ -26,6 +26,7 @@ BIN := ictree
 SRCDIR   := src
 INCDIR   := include
 DOCDIR   := doc
+GENDIR   := gen
 BUILDDIR := build
 
 # Termbox2 lib

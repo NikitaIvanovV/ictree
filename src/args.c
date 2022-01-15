@@ -21,17 +21,14 @@
 
 #include "args.h"
 #include "error.h"
+#include "options-msg.h"
 #include "version.h"
 
 #define VERSION_MSG         \
     "ictree v" VERSION "\n" \
     "Copyright 2022 Nikita Ivanov"
 
-#define HELP_MSG                               \
-    "Usage: ictree [OPTION]... [FILE]\n"       \
-    "\n"                                       \
-    "--version, -v:  print version and exit\n" \
-    "--help, -h:     print this message and exit"
+#define HELP_MSG "Usage: ictree [OPTION]... [FILE]\n" OPTIONS_MSG
 
 static struct option long_opts[] = {
     { "version", no_argument, 0, 'v' },
@@ -60,7 +57,7 @@ enum ArgAction process_args(int argc, char **argv)
             puts(VERSION_MSG);
             return ArgActionExit;
         case 'h':
-            puts(HELP_MSG);
+            printf("%s", HELP_MSG);
             return ArgActionExit;
         default:
             set_errorf("invalid option: %s", argv[opt_i + 1]);

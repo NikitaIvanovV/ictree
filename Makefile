@@ -60,7 +60,14 @@ ${BUILDDIR}/%.o: %.c
 	@mkdir -p ${@D}
 	$(CC) -c -o $@ $(CFLAGS) -MD $<
 
--include ${DEP}
+${GENDIR}/options-msg.h: ${MAN} ./gen-help.sh
+	@mkdir -p ${@D}
+	./gen-help.sh $< > $@
+
+${BUILDDIR}/args.o: CFLAGS += -I${GENDIR}
+${BUILDDIR}/args.o: ${GENDIR}/options-msg.h
 
 ${TBOBJ}:
 	$(MAKE) -C ${TBDIR} termbox.o
+
+-include ${DEP}
