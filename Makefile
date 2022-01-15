@@ -21,7 +21,7 @@ include config.mk
 SRC  := $(wildcard ${SRCDIR}/*.c)
 OBJ  := ${SRC:${SRCDIR}/%.c=${BUILDDIR}/%.o}
 DEP  := ${OBJ:.o=.d}
-MAN  := $(wildcard ${DOCDIR}/*)
+MAN  := ${DOCDIR}/ictree.1
 LOBJ := ${TBOBJ}
 
 vpath %.c ${SRCDIR}
@@ -39,12 +39,13 @@ install.bin: ${BIN}
 	install -d $(BINPREFIX)
 	install $< $(BINPREFIX)
 
-install.man: $(wildcard ${DOCDIR}/*)
-	install -d $(MANPREFIX)
-	# install $^ $(MANPREFIX)
+install.man: ${MAN}
+	install -d $(MANPREFIX)/man1
+	install -m 644 $< $(MANPREFIX)/man1
 
 uninstall:
 	$(RM) $(BINPREFIX)/${BIN}
+	$(RM) $(MANPREFIX)/man1/$(notdir ${MAN})
 
 clean:
 	$(RM) ${BIN} ${OBJ} ${DEP}

@@ -1,0 +1,135 @@
+.de EXX
+.RS
+.EX
+..
+.de EEE
+.EE
+.RE
+..
+.TH ICTREE 1
+.
+.SH NAME
+ictree - like tree but interactive
+.
+.SH SYNOPSIS
+.SY ictree
+.OP OPTION...
+.OP FILE
+.YS
+.
+.SH DESCRIPTION
+.BR ictree
+is a terminal-based program that takes a list of contents of directories and displays them in a pager similar to
+.IR less
+where you can fold/unfold directories and quickly jump between them. 
+.PP
+It is useful to browse
+.IR locate , \ find
+or any other program output that is a list of paths.
+.
+.SH EXAMPLES
+Find something with
+.IR locate
+and pipe output into
+.BR ictree :
+.EXX
+locate something | ictree
+.EEE
+.PP
+The same applies to any program that can produce a list of paths. For example, one can use
+.IR find
+with
+.BR ictree
+to view current working directory in a nice tree-like format:
+.EXX
+find | ictree
+.EEE
+.PP
+.BR ictree
+can also take a file that contains paths as its first argument:
+.EX
+locate something > list.txt
+ictree list.txt
+.EE
+.
+.SH COMMANDS
+.TP
+.BR <Enter> , \ <Mouse\ left\ button>
+Fold/unfold selected item
+.PP
+.TP
+.BR j , \ <Down>
+Move cursor down 1 line
+.PP
+.TP
+.BR k , \ <Up>
+Move cursor up 1 line
+.PP
+.TP
+.BR l , \ <Right>
+Scroll right
+.PP
+.TP
+.BR h , \ <Left>
+Scroll left
+.PP
+.TP
+.BR ^E , \ <Mouse\ wheel\ down>
+Scroll down one line
+.PP
+.TP
+.BR ^Y , \ <Mouse\ wheel\ up>
+Scroll up one line
+.PP
+.TP
+.BR ^D
+Scroll down half-window
+.PP
+.TP
+.BR ^U
+Scroll up half-window
+.PP
+.TP
+.BR ^F
+Scroll down one window
+.PP
+.TP
+.BR ^B
+Scroll up one window
+.PP
+.TP
+.BR g
+Move cursor to the top
+.PP
+.TP
+.BR G
+Move cursor to the bottom
+.PP
+.TP
+.BR z
+Put cursor at the center of window
+.PP
+.TP
+.BR y
+Copy selected item into X clipboard (using this command requires
+.IR xsel
+installed)
+.PP
+.TP
+.BR q
+Quit
+.
+.SH OPTIONS
+.TP
+.BR \-\-help , \ \-h
+Print a help message and exit.
+.PP
+.TP
+.BR \-\-version , \ \-v
+Display version information and exit.
+.
+.SH SEE ALSO
+tree(1), find(1), locate(1)
+.
+.SH AUTHOR
+Written by Nikita Ivanov.
