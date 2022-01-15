@@ -58,7 +58,9 @@ FILE *debug_file = NULL;
 #define ICON_STATUS_FOLDED   "▼ "
 #define ICON_ROOT_DIR        "/"
 
-#define PROMPT_MAX_LEN 255
+#define PROMPT_MAX_LEN   255
+#define PROMPT_LEFT_PAD  1
+#define PROMPT_RIGHT_PAD 1
 
 #define RETURN_ON_TB_ERROR(func_call, msg)                 \
     do {                                                   \
@@ -162,7 +164,8 @@ static void reset_prompt_msg(void)
 static void set_prompt_msg(char *msg)
 {
     reset_prompt_msg();
-    memcpy(prompt_msg.msg, msg, MIN(strlen(msg), PROMPT_MAX_LEN));
+    memcpy(prompt_msg.msg + PROMPT_LEFT_PAD, msg,
+           MIN(strlen(msg), PROMPT_MAX_LEN - PROMPT_LEFT_PAD));
 }
 
 static void set_prompt_msgf(char *format, ...)
@@ -344,7 +347,10 @@ static int draw(void)
             "failed to print prompt message");
 
     char ind[PROMPT_MAX_LEN];
-    snprintf(ind, PROMPT_MAX_LEN, "   %ld/%ld", paths.links[cursor_pos].index + 1, total_paths_l);
+    snprintf(ind, PROMPT_MAX_LEN - PROMPT_RIGHT_PAD, "   %ld/%ld", paths.links[cursor_pos].index + 1, total_paths_l);
+    for (i = 0; i < PROMPT_RIGHT_PAD; i++) {
+       strncat(ind, " ", PROMPT_MAX_LEN - 1);
+    }
     x = TREE_VIEW_X - strlen(ind);
     RETURN_ON_TB_ERROR(
             tb_print(x, y, fg, bg, ind),
