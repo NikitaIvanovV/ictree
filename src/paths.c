@@ -165,7 +165,7 @@ void free_full_path(char *str)
     free(str);
 }
 
-size_t get_paths(UnfoldedPaths *unfolded_paths, char **lines, size_t lines_l)
+size_t get_paths(UnfoldedPaths *unfolded_paths, char **lines, size_t lines_l, PathState init_state)
 {
     Path p;
     PathLink pl;
@@ -210,7 +210,7 @@ size_t get_paths(UnfoldedPaths *unfolded_paths, char **lines, size_t lines_l)
         p.line = line;
         p.subpaths = NULL;
         p.mainpath = (PathLink){ -1 };
-        p.state = PATH_DEFAULT_STATE;
+        p.state = init_state;
         p.depth = depth;
         pl = (PathLink){cvector_size(paths)};
 

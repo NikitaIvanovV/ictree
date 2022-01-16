@@ -24,7 +24,6 @@
 #include "vector.h"
 
 #define DIR_DELIM          '/'
-#define PATH_DEFAULT_STATE PathStateUnfolded
 
 typedef enum PathState {
     PathStateUnfolded = 0,
@@ -50,7 +49,7 @@ typedef struct UnfoldedPaths {
 
 char *get_full_path(Path *p);
 Path *get_path_from_link(PathLink link);
-size_t get_paths(UnfoldedPaths *unfolded_paths, char **lines, size_t lines_l);
+size_t get_paths(UnfoldedPaths *unfolded_paths, char **lines, size_t lines_l, PathState init_state);
 size_t unfold_path(UnfoldedPaths *unfolded_paths, size_t i);
 void fold_path(UnfoldedPaths *unfolded_paths, size_t i);
 void free_full_path(char *str);

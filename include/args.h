@@ -19,12 +19,19 @@
 #ifndef ARGS_H
 #define ARGS_H
 
+#include "paths.h"
+
 enum ArgAction {
     ArgActionDefault,
     ArgActionExit,
     ArgActionError,
 };
 
-enum ArgAction process_args(int argc, char **argv);
+typedef struct Options {
+    char *filename;
+    PathState init_paths_state;
+} Options;
+
+enum ArgAction process_args(Options *options, int argc, char **argv);
 
 #endif

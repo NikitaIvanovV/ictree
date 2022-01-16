@@ -30,15 +30,16 @@
 
 #define HELP_MSG "Usage: ictree [OPTION]... [FILE]\n" OPTIONS_MSG
 
+#define SHORT_OPTIONS "fvh"
+
 static struct option long_opts[] = {
+    { "fold", no_argument, 0, 'f' },
     { "version", no_argument, 0, 'v' },
     { "help", no_argument, 0, 'h' },
     { 0, 0, 0, 0 },
 };
 
-extern char *filename;
-
-enum ArgAction process_args(int argc, char **argv)
+enum ArgAction process_args(Options *options, int argc, char **argv)
 {
     int c;
     int opt_i = 0;
@@ -47,12 +48,16 @@ enum ArgAction process_args(int argc, char **argv)
     opterr = 0;
 
     while (1) {
-        c = getopt_long(argc, argv, "vh", long_opts, &opt_i);
+        c = getopt_long(argc, argv, SHORT_OPTIONS, long_opts, &opt_i);
 
         if (c == -1)
             break;
 
         switch (c) {
+        case 'f':
+            options->init_paths_state = PathStateFolded;
+            opt_i++;
+            break;
         case 'v':
             puts(VERSION_MSG);
             return ArgActionExit;
@@ -66,7 +71,7 @@ enum ArgAction process_args(int argc, char **argv)
     }
 
     if (opt_i + 1 < argc) {
-        filename = argv[opt_i + 1];
+        options->filename = argv[opt_i + 1];
     }
 
     return ArgActionDefault;

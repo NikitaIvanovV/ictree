@@ -92,7 +92,7 @@ typedef struct PromptMsg {
     uint32_t fg, bg;
 } PromptMsg;
 
-char *filename = NULL;
+static Options options;
 
 static char *program_path = NULL;
 
@@ -187,6 +187,12 @@ static void set_prompt_msg_errf(char *format, ...)
     char msg[PROMPT_MAX_LEN];
     FORMATTED_STRING(msg, format);
     set_prompt_msg_err(msg);
+}
+
+static void init_options()
+{
+    options.filename = NULL;
+    options.init_paths_state = PathStateUnfolded;
 }
 
 static void scroll_x(int i)
@@ -642,7 +648,9 @@ int main(int argc, char *argv[])
     program_path = argc >= 1 ? argv[0] : "ictree";
     stream = stdin;
 
-    ret = process_args(argc, argv);
+    init_options();
+
+    ret = process_args(&options, argc, argv);
     switch (ret) {
     case ArgActionError:
         print_error(get_error());
@@ -651,8 +659,8 @@ int main(int argc, char *argv[])
         return EXIT_SUCCESS;
     }
 
-    if (filename != NULL) {
-        if (open_file(filename) != 0) {
+    if (options.filename != NULL) {
+        if (open_file(options.filename) != 0) {
             print_error(get_error());
             return EXIT_FAILURE;
         }
@@ -679,7 +687,7 @@ int main(int argc, char *argv[])
     /* Get and process input */
     get_lines(&lines, &lines_l, stream);
     sort_lines(lines, lines_l);
-    total_paths_l = get_paths(&paths, lines, lines_l);
+    total_paths_l = get_paths(&paths, lines, lines_l, options.init_paths_state);
 
     /* Setup termbox */
     if ((ret = tb_init()) != TB_OK) {
