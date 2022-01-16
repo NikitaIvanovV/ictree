@@ -115,6 +115,7 @@ static int draw(void);
 static int fold(void);
 static int open_file(char *name);
 static int run(void);
+static int setup_signals();
 static int unfold(void);
 static int update_screen(void);
 static UpdScrSignal handle_key(struct tb_event ev);
@@ -466,6 +467,27 @@ static UpdScrSignal handle_mouse_click(int x, int y)
     return UpdScrSignalYes;
 }
 
+#define SETUP_SIGNAL(sig, fun)                            \
+    do {                                                  \
+        if (signal(sig, fun) == SIG_ERR) {                \
+            set_error("failed to setup " #sig " signal"); \
+            return 1;                                     \
+        }                                                 \
+    } while (0)
+
+static int setup_signals()
+{
+    SETUP_SIGNAL(SIGABRT, catch_error);
+    SETUP_SIGNAL(SIGSEGV, catch_error);
+
+    return 0;
+}
+
+static void catch_error(int signo)
+{
+    cleanup_termbox();
+}
+
 #define FAILED_TO_COPY_ERR_MSG "Failed to copy"
 
 static void copy_path(void)
@@ -637,11 +659,6 @@ static void cleanup(void)
 #endif
 }
 
-static void catch_error(int signo)
-{
-    cleanup_termbox();
-}
-
 int main(int argc, char *argv[])
 {
     int ret;
@@ -666,13 +683,8 @@ int main(int argc, char *argv[])
         }
     }
 
-    if (signal(SIGABRT, catch_error) == SIG_ERR) {
-        print_error("failed to setup abort signal");
-        return EXIT_FAILURE;
-    }
-
-    if (signal(SIGSEGV, catch_error) == SIG_ERR) {
-        print_error("failed to setup segmentation fault signal");
+    if (setup_signals() != 0) {
+        print_error(get_error());
         return EXIT_FAILURE;
     }
 
