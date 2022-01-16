@@ -54,8 +54,8 @@ FILE *debug_file = NULL;
 #define INDENT               2
 #define ICON_STATUS_LEN      2
 #define ICON_STATUS_DEFAULT  "• "
-#define ICON_STATUS_UNFOLDED "▶ "
-#define ICON_STATUS_FOLDED   "▼ "
+#define ICON_STATUS_FOLDED   "▶ "
+#define ICON_STATUS_UNFOLDED "▼ "
 #define ICON_ROOT_DIR        "/"
 
 #define PROMPT_MAX_LEN   255
