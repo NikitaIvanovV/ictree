@@ -54,10 +54,13 @@ ictree list.txt
 .EEE
 .
 .SH COMMANDS
-.TP
-.BR <Enter> , \ <Mouse\ left\ button>
-Fold/unfold selected item
-.PP
+All the commands for moving in the pager resemble
+.IR less
+and
+.IR vi
+commands.
+.
+.SS MOVING
 .TP
 .BR j , \ <Down>
 Move cursor down 1 line
@@ -109,6 +112,11 @@ Move cursor to the bottom
 .TP
 .BR z
 Put cursor at the center of window
+.
+.SS OTHERS
+.TP
+.BR <Enter> , \ <Mouse\ left\ button>
+Fold/unfold selected item
 .PP
 .TP
 .BR y
@@ -118,7 +126,7 @@ installed)
 .PP
 .TP
 .BR o
-Write selected item to standart output
+Write selected item to standart output and exit
 .PP
 .TP
 .BR q
@@ -138,7 +146,7 @@ Print a help message and exit.
 Display version information and exit.
 .
 .SH SEE ALSO
-tree(1), find(1), locate(1)
+tree(1), find(1), locate(1), less(1)
 .
 .SH AUTHOR
 Written by Nikita Ivanov.
