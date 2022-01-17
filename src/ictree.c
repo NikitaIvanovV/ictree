@@ -95,6 +95,7 @@ typedef struct PromptMsg {
 static Options options;
 
 static char *program_path = NULL;
+static char *output_str = NULL;
 
 static FILE *stream = NULL;
 static int stream_file = 0;
@@ -265,6 +266,19 @@ static void toggle_fold(void)
     }
 }
 
+static void quit(void)
+{
+    running = 0;
+}
+
+static void output_path(void)
+{
+    Path *p = get_path_from_link(paths.links[cursor_pos]);
+    output_str = get_full_path(p);
+
+    running = 0;
+}
+
 static int draw(void)
 {
     Path *path;
@@ -419,7 +433,7 @@ static UpdScrSignal handle_key(struct tb_event ev)
 
     switch (ev.ch) {
     case 'q':
-        CONTROL_ACTION(running = 0);
+        CONTROL_ACTION(quit());
     case 'j':
         CONTROL_ACTION(cursor_move(1));
     case 'k':
@@ -436,6 +450,8 @@ static UpdScrSignal handle_key(struct tb_event ev)
         CONTROL_ACTION(cursor_set(MAX_PATHS - 1));
     case 'y':
         CONTROL_ACTION(copy_path());
+    case 'o':
+        CONTROL_ACTION(output_path());
     }
 
     return UpdScrSignalNo;
@@ -712,6 +728,13 @@ int main(int argc, char *argv[])
     tb_hide_cursor();
 
     ret = run();
+
+    if (output_str != NULL) {
+        cleanup_termbox();
+        puts(output_str);
+        free_full_path(output_str);
+    }
+
     cleanup();
 
     if (ret != 0) {
