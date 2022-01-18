@@ -24,8 +24,14 @@
 
 #define LINE_DELIM '\n'
 
-void free_lines(char **list, size_t list_length);
-void get_lines(char ***lines, size_t *lines_l, FILE *stream);
-void sort_lines(char **lines, size_t n);
+typedef struct Lines {
+    char *string;
+    char **lines;
+    size_t lines_l;
+} Lines;
+
+Lines get_lines(FILE *stream);
+void free_lines(Lines *lines);
+void sort_lines(Lines lines);
 
 #endif

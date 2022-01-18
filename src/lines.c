@@ -25,15 +25,13 @@
 #include "utils.h"
 #include "vector.h"
 
-#define MIN_LINE_LENGTH       256
-#define MIN_LINES_LIST_LENGTH 256
+#define MIN_LINE_LENGTH      256
+#define MIN_LINES_VECTOR_LEN 256
 
-static char *get_line(FILE *stream)
+static char *get_line(cvector_vector_type(char) string, FILE *stream)
 {
     int c;
-
-    cvector_vector_type(char) line = NULL;
-    cvector_grow(line, MIN_LINE_LENGTH);
+    unsigned long p = cvector_size(string);
 
     do {
         c = fgetc(stream);
@@ -42,17 +40,47 @@ static char *get_line(FILE *stream)
             c = 0;
         }
 
-        cvector_push_back(line, c);
+        cvector_push_back(string, c);
     } while (c);
 
-    return line;
+    return string + p;
 }
 
-static void free_line(char *line)
+Lines get_lines(FILE *stream)
 {
-    if (line == NULL)
-        return;
-    cvector_free(line);
+    char *p;
+
+    Lines l = { .string = NULL, .lines = NULL, .lines_l = 0 };
+
+    /* string vector contains all lines */
+    cvector_grow(l.string, MIN_LINE_LENGTH * MIN_LINES_VECTOR_LEN);
+
+    /* lines vector contains pointers to every line */
+    cvector_grow(l.lines, MIN_LINES_VECTOR_LEN);
+
+    while (1) {
+        p = get_line(l.string, stream);
+
+        if (feof(stream))
+            break;
+
+        cvector_push_back(l.lines, p);
+    }
+
+    l.lines_l = cvector_size(l.lines);
+    return l;
+}
+
+void free_lines(Lines *lines)
+{
+    if (lines->string != NULL) {
+        cvector_free(lines->string);
+        lines->string = NULL;
+    }
+    if (lines->lines != NULL) {
+        cvector_free(lines->lines);
+        lines->lines = NULL;
+    }
 }
 
 static int line_compare(const void *a, const void *b)
@@ -65,37 +93,7 @@ static int line_compare(const void *a, const void *b)
     return strcmp(line1, line2);
 }
 
-void get_lines(char ***lines_, size_t *lines_l_, FILE *stream)
+void sort_lines(Lines lines)
 {
-    char *line;
-
-    cvector_vector_type(char *) lines = NULL;
-    cvector_grow(lines, MIN_LINES_LIST_LENGTH);
-
-    while (1) {
-        line = get_line(stream);
-
-        if (feof(stream)) {
-            free_line(line);
-            break;
-        }
-
-        cvector_push_back(lines, line);
-    }
-
-    *lines_ = lines;
-    *lines_l_ = cvector_size(lines);
-}
-
-void free_lines(char **list, size_t list_length)
-{
-    for (size_t i = 0; i < list_length; i++) {
-        free_line(list[i]);
-    }
-    cvector_free(list);
-}
-
-void sort_lines(char **lines, size_t n)
-{
-    qsort(lines, n, sizeof(lines[0]), line_compare);
+    qsort(lines.lines, lines.lines_l, sizeof(lines.lines[0]), line_compare);
 }

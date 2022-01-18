@@ -100,8 +100,8 @@ static char *output_str = NULL;
 static FILE *stream = NULL;
 static int stream_file = 0;
 
-static char **lines = NULL;
-static size_t lines_l = 0;
+static Lines lines;
+
 static UnfoldedPaths paths = { .links = NULL, .len = 0 };
 static size_t total_paths_l = 0;
 
@@ -654,11 +654,7 @@ static void cleanup_termbox(void)
 
 static void cleanup_lines(void)
 {
-    if (lines == NULL)
-        return;
-    free_lines(lines, lines_l);
-    lines = NULL;
-    lines_l = 0;
+    free_lines(&lines);
 }
 
 static void cleanup_paths(void)
@@ -718,9 +714,9 @@ int main(int argc, char *argv[])
 #endif
 
     /* Get and process input */
-    get_lines(&lines, &lines_l, stream);
-    sort_lines(lines, lines_l);
-    total_paths_l = get_paths(&paths, lines, lines_l, options.init_paths_state);
+    lines = get_lines(stream);
+    sort_lines(lines);
+    total_paths_l = get_paths(&paths, lines.lines, lines.lines_l, options.init_paths_state);
 
     /* Setup termbox */
     if ((ret = tb_init()) != TB_OK) {
