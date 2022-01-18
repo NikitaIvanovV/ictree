@@ -92,10 +92,17 @@ typedef struct PromptMsg {
     uint32_t fg, bg;
 } PromptMsg;
 
-static Options options;
+
+enum State {
+    StateRunning,
+    StateStop,
+    StateQuit,
+};
 
 static char *program_path = NULL;
 static char *output_str = NULL;
+
+static Options options;
 
 static FILE *stream = NULL;
 static int stream_file = 0;
@@ -110,10 +117,11 @@ static long cursor_pos = 0;
 
 static PromptMsg prompt_msg;
 
-static int running = 1;
+static volatile enum State state;
 
 static int draw(void);
 static int fold(void);
+static int init_termbox(void);
 static int open_file(char *name);
 static int run(void);
 static int setup_signals();
@@ -123,6 +131,8 @@ static UpdScrSignal handle_key(struct tb_event ev);
 static UpdScrSignal handle_mouse_click(int x, int y);
 static UpdScrSignal handle_mouse(struct tb_event ev);
 static void catch_error(int signo);
+static void catch_stop(int signo);
+static void catch_term(int signo);
 static void center_cursor(void);
 static void cleanup_lines(void);
 static void cleanup_paths(void);
@@ -144,6 +154,7 @@ static void set_prompt_msg(char *msg);
 static void set_prompt_msg_err(char *msg);
 static void set_prompt_msg_errf(char *format, ...);
 static void set_prompt_msgf(char *format, ...);
+static void stop(void);
 static void toggle_fold(void);
 
 static void print_error(char *error_msg)
@@ -271,7 +282,12 @@ static void toggle_fold(void)
 
 static void quit(void)
 {
-    running = 0;
+    state = StateQuit;
+}
+
+static void stop(void)
+{
+    state = StateStop;
 }
 
 static void output_path(void)
@@ -279,7 +295,7 @@ static void output_path(void)
     Path *p = get_path_from_link(paths.links[cursor_pos]);
     output_str = get_full_path(p);
 
-    running = 0;
+    quit();
 }
 
 static int draw(void)
@@ -432,6 +448,8 @@ static UpdScrSignal handle_key(struct tb_event ev)
         CONTROL_ACTION(scroll_x(SCROLL_X));
     case TB_KEY_ENTER:
         CONTROL_ACTION(toggle_fold());
+    case TB_KEY_CTRL_Z:
+        CONTROL_ACTION(raise(SIGTSTP));
     }
 
     switch (ev.ch) {
@@ -500,6 +518,9 @@ static int setup_signals()
 {
     SETUP_SIGNAL(SIGABRT, catch_error);
     SETUP_SIGNAL(SIGSEGV, catch_error);
+    SETUP_SIGNAL(SIGINT, catch_term);
+    SETUP_SIGNAL(SIGTERM, catch_term);
+    SETUP_SIGNAL(SIGTSTP, catch_stop);
 
     return 0;
 }
@@ -507,6 +528,16 @@ static int setup_signals()
 static void catch_error(int signo)
 {
     cleanup_termbox();
+}
+
+static void catch_term(int signo)
+{
+    quit();
+}
+
+static void catch_stop(int signo)
+{
+    stop();
 }
 
 #define FAILED_TO_COPY_ERR_MSG "Failed to copy"
@@ -591,30 +622,33 @@ static int run(void)
     RETURN_ON_ERROR(update_screen());
 
     while (1) {
-        if ((ret = tb_poll_event(&ev)) != TB_OK) {
-            if (ret == TB_ERR_POLL && tb_last_errno() == EINTR)
-                continue;
+        ret = tb_peek_event(&ev, 10);
+        if (ret == TB_OK) {
+            switch (ev.type) {
+            case TB_EVENT_KEY:
+                if (handle_key(ev) == UpdScrSignalYes) {
+                    RETURN_ON_ERROR(update_screen());
+                    reset_prompt_msg();
+                }
+                break;
+            case TB_EVENT_MOUSE:
+                if (handle_mouse(ev) == UpdScrSignalYes) {
+                    RETURN_ON_ERROR(update_screen());
+                    reset_prompt_msg();
+                }
+                break;
+            case TB_EVENT_RESIZE:
+                RETURN_ON_ERROR(update_screen());
+                break;
+            }
+        } else if (ret == TB_ERR_POLL && tb_last_errno() == EINTR) {
+            continue;
+        } else if (ret != TB_ERR_NO_EVENT) {
             set_errorf("failed to poll termbox event: %s", tb_strerror(ret));
             return 1;
         }
-        switch (ev.type) {
-        case TB_EVENT_KEY:
-            if (handle_key(ev) == UpdScrSignalYes) {
-                RETURN_ON_ERROR(update_screen());
-                reset_prompt_msg();
-            }
-            break;
-        case TB_EVENT_MOUSE:
-            if (handle_mouse(ev) == UpdScrSignalYes) {
-                RETURN_ON_ERROR(update_screen());
-                reset_prompt_msg();
-            }
-            break;
-        case TB_EVENT_RESIZE:
-            RETURN_ON_ERROR(update_screen());
-            break;
-        }
-        if (running != 1) {
+
+        if (state != StateRunning) {
             break;
         }
     }
@@ -641,6 +675,18 @@ static int open_file(char *name)
 
     stream = f;
     stream_file = 1;
+    return 0;
+}
+
+static int init_termbox(void)
+{
+    int ret;
+    if ((ret = tb_init()) != TB_OK) {
+        set_errorf("failed to init termbox: %s", tb_strerror(ret));
+        return 1;
+    }
+
+    state = StateRunning;
     return 0;
 }
 
@@ -718,9 +764,11 @@ int main(int argc, char *argv[])
     sort_lines(lines);
     total_paths_l = get_paths(&paths, lines.lines, lines.lines_l, options.init_paths_state);
 
+init_tb:
+
     /* Setup termbox */
-    if ((ret = tb_init()) != TB_OK) {
-        print_errorf("failed to init termbox: %s", tb_strerror(ret));
+    if (init_termbox() != 0) {
+        print_error(get_error());
         cleanup();
         return EXIT_FAILURE;
     }
@@ -729,6 +777,15 @@ int main(int argc, char *argv[])
     tb_hide_cursor();
 
     ret = run();
+
+    /* TSTP signal handler */
+    if (state == StateStop) {
+        cleanup_termbox(); /* Restore initial terminal state */
+        signal(SIGTSTP, SIG_DFL); /* Set default handler */
+        raise(SIGTSTP); /* Stop process */
+        signal(SIGTSTP, catch_stop); /* Process is continued... */
+        goto init_tb; /* Init termbox again */
+    }
 
     if (output_str != NULL) {
         cleanup_termbox();
