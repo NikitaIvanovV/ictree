@@ -28,7 +28,7 @@
     "ictree v" VERSION "\n" \
     "Copyright 2022 Nikita Ivanov"
 
-#define HELP_MSG "Usage: ictree [OPTION]... [FILE]\n" OPTIONS_MSG
+#define HELP_MSG "Usage: ictree [OPTION...] [FILE]\n" OPTIONS_MSG
 
 #define SHORT_OPTIONS "fvh"
 
