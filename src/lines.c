@@ -25,13 +25,13 @@
 #include "utils.h"
 #include "vector.h"
 
-#define MIN_LINE_LENGTH      256
 #define MIN_LINES_VECTOR_LEN 256
 
-static char *get_line(cvector_vector_type(char) string, FILE *stream)
+static char *get_line(FILE *stream)
 {
     int c;
-    unsigned long p = cvector_size(string);
+
+    cvector_vector_type(char) s = NULL;
 
     do {
         c = fgetc(stream);
@@ -40,29 +40,28 @@ static char *get_line(cvector_vector_type(char) string, FILE *stream)
             c = 0;
         }
 
-        cvector_push_back(string, c);
+        cvector_push_back(s, c);
     } while (c);
 
-    return string + p;
+    return s;
 }
 
 Lines get_lines(FILE *stream)
 {
     char *p;
 
-    Lines l = { .string = NULL, .lines = NULL, .lines_l = 0 };
-
-    /* string vector contains all lines */
-    cvector_grow(l.string, MIN_LINE_LENGTH * MIN_LINES_VECTOR_LEN);
+    Lines l = { .lines = NULL, .lines_l = 0 };
 
     /* lines vector contains pointers to every line */
     cvector_grow(l.lines, MIN_LINES_VECTOR_LEN);
 
     while (1) {
-        p = get_line(l.string, stream);
+        p = get_line(stream);
 
-        if (feof(stream))
+        if (feof(stream)) {
+            cvector_free(p);
             break;
+        }
 
         cvector_push_back(l.lines, p);
     }
@@ -73,13 +72,13 @@ Lines get_lines(FILE *stream)
 
 void free_lines(Lines *lines)
 {
-    if (lines->string != NULL) {
-        cvector_free(lines->string);
-        lines->string = NULL;
-    }
     if (lines->lines != NULL) {
+        for (size_t i = 0; i < cvector_size(lines->lines); i++) {
+            cvector_free(lines->lines[i]);
+        }
         cvector_free(lines->lines);
         lines->lines = NULL;
+        lines->lines_l = 0;
     }
 }
 

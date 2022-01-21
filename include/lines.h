@@ -25,7 +25,6 @@
 #define LINE_DELIM '\n'
 
 typedef struct Lines {
-    char *string;
     char **lines;
     size_t lines_l;
 } Lines;
