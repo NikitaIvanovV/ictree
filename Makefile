@@ -18,11 +18,12 @@
 
 include config.mk
 
-SRC  := $(wildcard ${SRCDIR}/*.c)
-OBJ  := ${SRC:${SRCDIR}/%.c=${BUILDDIR}/%.o}
-DEP  := ${OBJ:.o=.d}
-MAN  := ${DOCDIR}/ictree.1
-LOBJ := ${TBOBJ}
+SRC    := $(wildcard ${SRCDIR}/*.c)
+OBJ    := ${SRC:${SRCDIR}/%.c=${BUILDDIR}/%.o}
+DEP    := ${OBJ:.o=.d}
+MAN    := ${DOCDIR}/ictree.1
+LOBJ   := ${TBOBJ}
+BINTAR := ${BIN}.tar.gz
 
 vpath %.c ${SRCDIR}
 
@@ -48,10 +49,12 @@ uninstall:
 	$(RM) $(MANPREFIX)/man1/$(notdir ${MAN})
 
 clean:
-	$(RM) ${BIN} ${OBJ} ${DEP}
+	$(RM) ${BIN} ${BINTAR} ${OBJ} ${DEP}
 	$(MAKE) -C ${TBDIR} clean
 
-.PHONY: all options install install.bin install.man uninstall clean
+dist: ${BINTAR}
+
+.PHONY: all options install install.bin install.man uninstall clean dist
 
 ${BIN}: ${OBJ} ${LOBJ}
 	$(CC) -o $@ $(LDFLAGS) $+
@@ -69,5 +72,8 @@ ${BUILDDIR}/args.o: ${GENDIR}/options-msg.h
 
 ${TBOBJ}:
 	$(MAKE) -C ${TBDIR} termbox.o
+
+${BINTAR}: ${BIN}
+	tar -czf $@ $<
 
 -include ${DEP}
