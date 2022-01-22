@@ -19,7 +19,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
+#include <regex.h>
 
+#include "error.h"
 #include "paths.h"
 #include "utils.h"
 #include "vector.h"
@@ -94,9 +96,11 @@ end:
     return off + subpaths_l;
 }
 
-void fold_path(UnfoldedPaths *unfolded_paths, size_t i)
+size_t fold_path(UnfoldedPaths *unfolded_paths, size_t i)
 {
     assert(i < unfolded_paths->len);
+
+    size_t k, diff = 0;
 
     Path *p = get_path_from_link(unfolded_paths->links[i]);
 
@@ -104,8 +108,6 @@ void fold_path(UnfoldedPaths *unfolded_paths, size_t i)
         goto end;
 
     unsigned depth = p->depth;
-
-    size_t k;
 
     /* Find the first path that is not a subpath of *p */
     for (k = i + 1; k < unfolded_paths->len; k++) {
@@ -119,48 +121,80 @@ void fold_path(UnfoldedPaths *unfolded_paths, size_t i)
      * position right after *p, thus erasing the subpaths */
     memmove(unfolded_paths->links + i + 1, unfolded_paths->links + k,
             (unfolded_paths->len - k) * sizeof(PathLink));
-    unfolded_paths->len -= k - i - 1;
+    diff = k - i - 1;
+    unfolded_paths->len -= diff;
 
 end:
 
     p->state = PathStateFolded;
+    return diff;
 }
 
-char *get_full_path(Path *p)
+void unfold_nested_path(UnfoldedPaths *unfolded_paths, Path *path, size_t *pos)
 {
-    PathLink mainpath_l;
-    unsigned long str_l;
-    cvector_vector_type(Path *) stack = NULL;
+    Path *p = path;
+    cvector_vector_type(Path *) queue = NULL;
 
     while (1) {
-        cvector_push_back(stack, p);
-        mainpath_l = p->mainpath;
-        if (mainpath_l.index == (size_t)-1)
+        cvector_push_back(queue, p);
+
+        if (!HAS_MAIN_PATH(*p))
             break;
-        p = get_path_from_link(mainpath_l);
+
+        p = get_path_from_link(p->mainpath);
     }
 
+    size_t u_i = 0;
+    long i = cvector_size(queue) - 1;
+    while (1) {
+        p = get_path_from_link(unfolded_paths->links[u_i]);
+        if (p == queue[i]) {
+            if (p->state == PathStateFolded)
+                unfold_path(unfolded_paths, u_i);
+            if (p == path) {
+                if (pos != NULL)
+                    *pos = u_i;
+                break;
+            }
+            i--;
+            assert(i >= 0);
+        }
+        u_i++;
+        assert(u_i < unfolded_paths->len);
+    }
+
+    cvector_free(queue);
+}
+
+static char *get_full_path(PathLink *links, size_t links_l, char *line)
+{
+    unsigned long i;
+    unsigned long str_l;
+
     str_l = 0;
-    for (long i = cvector_size(stack) - 1; i >= 0; i--) {
-        str_l += strlen(stack[i]->line);
+    for (i = 0; i < links_l; i++) {
+        str_l += strlen(get_path_from_link(links[i])->line);
         str_l += 1; /* For dir delimeter */
     }
 
-    char *str = malloc((str_l + 1) * sizeof(char));
-    str[0] = '\0';
+    if (strlen(line) == 0)
+        line = "/";
 
-    for (long i = cvector_size(stack) - 1; i >= 0; i--) {
-        strcat(str, stack[i]->line);
-        if (i > 0)
-            strcat(str, "/");
+    str_l += strlen(line);
+
+    char *str = calloc(str_l + 1, sizeof(char));
+
+    for (i = 0; i < links_l; i++) {
+        strncat(str, get_path_from_link(links[i])->line, str_l);
+        strncat(str, "/", str_l);
     }
 
-    cvector_free(stack);
+    strncat(str, line, str_l);
 
     return str;
 }
 
-void free_full_path(char *str)
+static void free_full_path(char *str)
 {
     free(str);
 }
@@ -209,10 +243,10 @@ size_t get_paths(UnfoldedPaths *unfolded_paths, char **lines, size_t lines_l, Pa
 
         p.line = line;
         p.subpaths = NULL;
-        p.mainpath = (PathLink){ -1 };
+        p.mainpath = NO_MAIN_PATH;
         p.state = init_state;
         p.depth = depth;
-        pl = (PathLink){cvector_size(paths)};
+        pl = (PathLink){ cvector_size(paths) };
 
         if (depth < cvector_size(stack)) {
             if (strcmp(p.line, get_path_from_link(stack[depth])->line) == 0) {
@@ -234,6 +268,8 @@ size_t get_paths(UnfoldedPaths *unfolded_paths, char **lines, size_t lines_l, Pa
             cvector_push_back(unfolded_paths->links, pl);
         }
 
+        p.full_path = get_full_path(stack, cvector_size(stack), p.line);
+
         cvector_push_back(stack, pl);
         cvector_push_back(paths, p);
         depth++;
@@ -249,12 +285,65 @@ void free_paths(UnfoldedPaths unfolded_paths)
     if (paths != NULL) {
         for (size_t i = 0; i < cvector_size(paths); i++) {
             cvector_free(paths[i].subpaths);
+            free_full_path(paths[i].full_path);
         }
         cvector_free(paths);
         paths = NULL;
     }
+
     if (unfolded_paths.links != NULL) {
         cvector_free(unfolded_paths.links);
         unfolded_paths.links = NULL;
     }
+}
+
+long search_path(PathLink **links, char *pattern)
+{
+    char err_buf[64], *s;
+    int ret, full_path;
+    regex_t reg;
+
+    if ((ret = regcomp(&reg, pattern, REG_EXTENDED)) != 0) {
+        goto error;
+    }
+
+    cvector_vector_type(PathLink) paths_vec = NULL;
+
+    full_path = strchr(pattern, DIR_DELIM) != NULL;
+
+    for (size_t i = 0; i < cvector_size(paths); i++) {
+        s = full_path ? paths[i].full_path : paths[i].line;
+        ret = regexec(&reg, s, 0, NULL, 0);
+        if (!ret) {
+            cvector_push_back(paths_vec, (PathLink){ i });
+        } else if (ret != REG_NOMATCH) {
+            goto error_cleanup;
+        }
+    }
+
+    regfree(&reg);
+
+    *links = paths_vec;
+
+    if (paths_vec == NULL) {
+        return 0;
+    } else {
+        return cvector_size(paths_vec);
+    }
+
+error_cleanup:
+    regfree(&reg);
+    if (paths_vec != NULL) {
+        cvector_free(paths_vec);
+    }
+
+error:
+    regerror(ret, &reg, err_buf, LENGTH(err_buf));
+    set_errorf("regex failed: %s", err_buf);
+    return -1;
+}
+
+void free_search_path(PathLink *links)
+{
+    cvector_free(links);
 }

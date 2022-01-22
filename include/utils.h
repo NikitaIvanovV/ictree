@@ -23,6 +23,8 @@
 
 #include "error.h"
 
+#define LENGTH(a) (sizeof(a) / sizeof(a[0]))
+
 #define MAX(a, b) ((a > b) ? a : b)
 #define MIN(a, b) ((a < b) ? a : b)
 
@@ -34,6 +36,17 @@
         va_end(args);                              \
     } while (0);
 
+#ifdef DEV
+extern FILE *debug_file;
+#define DEBUG_FILE "debug"
+#define DEBUG(...)                        \
+    do {                                  \
+        fprintf(debug_file, __VA_ARGS__); \
+        fflush(debug_file);               \
+    } while (0)
+#endif
+
+int size_t_compare(const void *a, const void *b);
 size_t find_first_nonblank(char *string);
 
 #endif

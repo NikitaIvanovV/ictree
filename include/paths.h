@@ -23,7 +23,11 @@
 
 #include "vector.h"
 
-#define DIR_DELIM          '/'
+#define DIR_DELIM    '/'
+
+#define NO_MAIN_PATH        ((PathLink){ -1 })
+#define PATH_LINKS_EQ(a, b) ((a).index == (b).index)
+#define HAS_MAIN_PATH(path) ((path).mainpath.index != NO_MAIN_PATH.index)
 
 typedef enum PathState {
     PathStateUnfolded = 0,
@@ -36,6 +40,7 @@ typedef struct PathLink {
 
 typedef struct Path {
     char *line;
+    char *full_path;
     PathState state;
     unsigned depth;
     PathLink mainpath;
@@ -47,12 +52,13 @@ typedef struct UnfoldedPaths {
     size_t len;
 } UnfoldedPaths;
 
-char *get_full_path(Path *p);
 Path *get_path_from_link(PathLink link);
+long search_path(PathLink **links, char *pattern);
+size_t fold_path(UnfoldedPaths *unfolded_paths, size_t i);
 size_t get_paths(UnfoldedPaths *unfolded_paths, char **lines, size_t lines_l, PathState init_state);
 size_t unfold_path(UnfoldedPaths *unfolded_paths, size_t i);
-void fold_path(UnfoldedPaths *unfolded_paths, size_t i);
-void free_full_path(char *str);
 void free_paths(UnfoldedPaths unfolded_paths);
+void free_search_path(PathLink *links);
+void unfold_nested_path(UnfoldedPaths *unfolded_paths, Path *path, size_t *pos);
 
 #endif

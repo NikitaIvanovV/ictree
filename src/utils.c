@@ -20,6 +20,10 @@
 
 #include <string.h>
 
+#ifdef DEV
+FILE *debug_file = NULL;
+#endif
+
 size_t find_first_nonblank(char *string)
 {
     char c;
@@ -30,4 +34,11 @@ size_t find_first_nonblank(char *string)
     }
 
     return 0;
+}
+
+int size_t_compare(const void *a, const void *b)
+{
+    size_t a_i = *(size_t *)a, b_i = *(size_t *)b;
+
+    return (a_i < b_i) ? -1 : (a_i > b_i);
 }
