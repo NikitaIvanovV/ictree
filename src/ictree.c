@@ -144,6 +144,7 @@ static int run(void);
 static int setup_signals();
 static int unfold(void);
 static int update_screen(void);
+static UpdScrSignal goto_parent(void);
 static UpdScrSignal handle_key(struct tb_event ev);
 static UpdScrSignal handle_mouse_click(int x, int y);
 static UpdScrSignal handle_mouse(struct tb_event ev);
@@ -272,6 +273,24 @@ static void cursor_move(int i)
 static void center_cursor(void)
 {
     scroll_y_raw(cursor_pos - TREE_VIEW_MID);
+}
+
+static UpdScrSignal goto_parent(void)
+{
+    Path *path = get_path_from_link(paths.links[cursor_pos]);
+
+    if (!HAS_MAIN_PATH(*path))
+        return UpdScrSignalNo;
+
+    for (long i = cursor_pos - 1; i >= 0; i--) {
+        if (PATH_LINKS_EQ(paths.links[i], path->mainpath)) {
+            cursor_set(i);
+            return UpdScrSignalYes;
+        }
+    }
+
+    /* If mainpath exists, it must always be found */
+    abort();
 }
 
 static int unfold(void)
@@ -690,6 +709,8 @@ static UpdScrSignal handle_key(struct tb_event ev)
         CONTROL_ACTION(cursor_set(0));
     case 'G':
         CONTROL_ACTION(cursor_set(MAX_PATHS - 1));
+    case 'p':
+        return goto_parent();
     case '/':
         CONTROL_ACTION(init_search(1));
     case '?':
