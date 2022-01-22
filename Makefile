@@ -52,7 +52,7 @@ clean:
 	$(RM) ${BIN} ${BINTAR} ${OBJ} ${DEP}
 	$(MAKE) -C ${TBDIR} clean
 
-dist: ${BINTAR}
+dist: clean ${BINTAR}
 
 .PHONY: all options install install.bin install.man uninstall clean dist
 
