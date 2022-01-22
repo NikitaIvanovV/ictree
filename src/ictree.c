@@ -173,6 +173,7 @@ static void scroll_x(int i);
 static void scroll_y(int i);
 static void scroll_y_raw(int i);
 static void search(char *pattern);
+static void set_default_prompt(void);
 static void set_prompt_msg(char *msg);
 static void set_prompt_msg_err(char *msg);
 static void set_prompt_msg_errf(char *format, ...);
@@ -255,11 +256,14 @@ static void scroll_y_raw(int i)
 static void cursor_set(long p)
 {
     cursor_pos = p;
+
     if (cursor_pos < TREE_VIEW_TOP && pager_pos.y < MAX_PATHS) {
         pager_pos.y = cursor_pos;
     } else if (cursor_pos > TREE_VIEW_BOT && pager_pos.y + TREE_VIEW_Y > 0) {
         pager_pos.y = cursor_pos - TREE_VIEW_Y + 1;
     }
+
+    set_default_prompt();
 }
 
 static void cursor_move(int i)
@@ -519,6 +523,11 @@ static int is_search_result(PathLink link, long pos)
 
     size_t i = p - search_results.positions;
     return PATH_LINKS_EQ(link, search_results.links[i]);
+}
+
+static void set_default_prompt(void)
+{
+    set_prompt_msg(get_path_from_link(paths.links[cursor_pos])->full_path);
 }
 
 static int draw(void)
@@ -860,7 +869,7 @@ static int run(void)
     int ret;
     struct tb_event ev;
 
-    reset_prompt_msg();
+    set_default_prompt();
 
     RETURN_ON_ERROR(update_screen());
 
@@ -871,13 +880,11 @@ static int run(void)
             case TB_EVENT_KEY:
                 if (handle_key(ev) == UpdScrSignalYes) {
                     RETURN_ON_ERROR(update_screen());
-                    reset_prompt_msg();
                 }
                 break;
             case TB_EVENT_MOUSE:
                 if (handle_mouse(ev) == UpdScrSignalYes) {
                     RETURN_ON_ERROR(update_screen());
-                    reset_prompt_msg();
                 }
                 break;
             case TB_EVENT_RESIZE:
