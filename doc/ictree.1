@@ -22,7 +22,7 @@ ictree - like tree but interactive
 .BR ictree
 is a terminal-based program that takes a list of contents of directories and displays them in a pager similar to
 .IR less
-where you can fold/unfold directories and quickly jump between them. 
+where you can fold/unfold directories and quickly jump between them.
 .PP
 It is useful to browse
 .IR locate , \ find
@@ -52,6 +52,12 @@ can also take a file that contains paths as its first argument:
 locate something > list.txt
 ictree list.txt
 .EEE
+.PP
+ictree supports
+.IR vi -like
+search functionality. Extended regular expressions are supported. If pattern contains
+.B /
+character, the search is performed by full paths of items instead of their short names in the list.
 .
 .SH COMMANDS
 All the commands for moving in the pager resemble
@@ -121,6 +127,22 @@ Fold/unfold selected item
 .TP
 .BR <Space>
 Fold/unfold selected item and move cursor down 1 line
+.PP
+.TP
+.BR /
+Search forward for pattern
+.PP
+.TP
+.BR ?
+Search backward for pattern
+.PP
+.TP
+.BR n
+Repeat previous search
+.PP
+.TP
+.BR N
+Repeat previous search in reverse direction
 .PP
 .TP
 .BR y
