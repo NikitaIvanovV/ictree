@@ -16,6 +16,8 @@ The program is written in C using awesome [termbox2](https://github.com/termbox/
 
 ## Installation
 
+### Manual
+
 ```sh
 git clone --recursive https://github.com/NikitaIvanovV/ictree
 cd ictree
@@ -23,6 +25,14 @@ sudo make install
 ```
 
 Uninstall with `sudo make uninstall`
+
+### AUR
+
+If you are an Arch Linux user, you can install [`ictree`](https://aur.archlinux.org/packages/ictree/) AUR package.
+
+```sh
+yay -S ictree
+```
 
 ## Usage
 
