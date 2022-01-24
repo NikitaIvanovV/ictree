@@ -44,7 +44,8 @@ typedef struct Path {
     PathState state;
     unsigned depth;
     PathLink mainpath;
-    cvector_vector_type(PathLink) subpaths;
+    PathLink* subpaths;
+    size_t subpaths_l;
 } Path;
 
 typedef struct UnfoldedPaths {

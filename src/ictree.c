@@ -552,7 +552,7 @@ static int draw(void)
         }
 
         path = get_path_from_link(paths.links[i]);
-        subpaths_l = cvector_size(path->subpaths);
+        subpaths_l = path->subpaths_l;
         path_line = path->line;
         indent = path->depth * INDENT;
 

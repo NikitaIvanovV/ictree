@@ -243,6 +243,7 @@ size_t get_paths(UnfoldedPaths *unfolded_paths, char **lines, size_t lines_l, Pa
 
         p.line = line;
         p.subpaths = NULL;
+        p.subpaths_l = 0;
         p.mainpath = NO_MAIN_PATH;
         p.state = init_state;
         p.depth = depth;
@@ -260,6 +261,7 @@ size_t get_paths(UnfoldedPaths *unfolded_paths, char **lines, size_t lines_l, Pa
             PathLink mainpath_l = stack[cvector_size(stack) - 1];
             Path *mainpath = get_path_from_link(mainpath_l);
             cvector_push_back(mainpath->subpaths, pl);
+            mainpath->subpaths_l++;
             p.mainpath = mainpath_l;
             if (mainpath->state == PathStateUnfolded) {
                 cvector_push_back(unfolded_paths->links, pl);
