@@ -48,7 +48,7 @@ static char *get_line(FILE *stream)
 
 Lines get_lines(FILE *stream)
 {
-    char *p;
+    char *s;
 
     Lines l = { .lines = NULL, .lines_l = 0 };
 
@@ -56,14 +56,21 @@ Lines get_lines(FILE *stream)
     cvector_grow(l.lines, MIN_LINES_VECTOR_LEN);
 
     while (1) {
-        p = get_line(stream);
+        s = get_line(stream);
+
+        /* Append / char if not already there */
+        if (cvector_size(s) - 2 != DIR_DELIM) {
+            cvector_pop_back(s);
+            cvector_push_back(s, DIR_DELIM);
+            cvector_push_back(s, 0);
+        }
 
         if (feof(stream)) {
-            cvector_free(p);
+            cvector_free(s);
             break;
         }
 
-        cvector_push_back(l.lines, p);
+        cvector_push_back(l.lines, s);
     }
 
     l.lines_l = cvector_size(l.lines);

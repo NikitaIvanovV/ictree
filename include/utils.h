@@ -23,6 +23,9 @@
 
 #include "error.h"
 
+#define DIR_DELIM   '/'
+#define DIR_DELIM_S ((char[2]){ DIR_DELIM, 0 })
+
 #define LENGTH(a) (sizeof(a) / sizeof(a[0]))
 
 #define MAX(a, b) ((a > b) ? a : b)

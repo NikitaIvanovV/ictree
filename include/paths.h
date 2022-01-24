@@ -23,8 +23,6 @@
 
 #include "vector.h"
 
-#define DIR_DELIM    '/'
-
 #define NO_MAIN_PATH        ((PathLink){ -1 })
 #define PATH_LINKS_EQ(a, b) ((a).index == (b).index)
 #define HAS_MAIN_PATH(path) ((path).mainpath.index != NO_MAIN_PATH.index)
