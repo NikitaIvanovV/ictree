@@ -26,6 +26,9 @@ sudo make install
 
 Uninstall with `sudo make uninstall`
 
+*Warning: don't forget to add `--recursive` option to `git clone` command!
+Otherwise, you will get `No such file or directory` errors while compiling.
+
 ### AUR
 
 If you are an Arch Linux user, you can install [`ictree`](https://aur.archlinux.org/packages/ictree/) AUR package.
