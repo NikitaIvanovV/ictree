@@ -226,7 +226,7 @@ size_t get_paths(UnfoldedPaths *unfolded_paths, char **lines, size_t lines_l, Pa
 
         line_off += comp_len + 1;
 
-        if (strlen(line) == 0 && depth > 0) {
+        if (comp_len == 0 && depth > 0) {
             i++;
             line_off = 0;
             continue;
