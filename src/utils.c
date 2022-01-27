@@ -16,9 +16,9 @@
  * ictree. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "utils.h"
-
 #include <string.h>
+
+#include "utils.h"
 
 #ifdef DEV
 FILE *debug_file = NULL;
