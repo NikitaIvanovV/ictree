@@ -697,6 +697,8 @@ static UpdScrSignal handle_key(struct tb_event ev)
         CONTROL_ACTION(toggle_fold());
     case TB_KEY_CTRL_Z:
         CONTROL_ACTION(raise(SIGTSTP));
+    case TB_KEY_ESC:
+        CONTROL_ACTION(quit());
     }
 
     switch (ev.ch) {
