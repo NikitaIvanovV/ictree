@@ -27,7 +27,7 @@ sudo make install
 Uninstall with `sudo make uninstall`
 
 *Warning: don't forget to add `--recursive` option to `git clone` command!
-Otherwise, you will get `No such file or directory` errors while compiling.
+Otherwise, you will get `No such file or directory` errors while compiling.*
 
 ### AUR
 
