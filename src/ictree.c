@@ -804,7 +804,8 @@ static void catch_stop(int signo)
 static void copy_path(void)
 {
     char *full_path = NULL;
-    char *args[] = { "/bin/sh", "-c", "xsel --clipboard", NULL };
+    char *xsel_args[] = { "xsel", "--clipboard", NULL };
+    char *wl_copy_args[] = { "wl-copy", NULL };
 
     int fd[2], fd_r, fd_w;
     if (pipe(fd) == -1) {
@@ -831,7 +832,13 @@ static void copy_path(void)
         dup2(fd_r, STDIN_FILENO);
         close(fd_r);
 
-        execv(args[0], args);
+        execvp(xsel_args[0], xsel_args);
+        if (errno == ENOENT) {
+          execvp(wl_copy_args[0], wl_copy_args);
+          if (errno == ENOENT) {
+            exit(127);
+          }
+        }
         exit(EXIT_FAILURE);
     }
 
@@ -855,7 +862,7 @@ static void copy_path(void)
     if (WIFEXITED(status)) {
         int es = WEXITSTATUS(status);
         if (es == 127) {
-            set_prompt_msg_errf(FAILED_TO_COPY_ERR_MSG ": xsel not found", es);
+            set_prompt_msg_errf(FAILED_TO_COPY_ERR_MSG ": neither xsel nor wl-copy were found", es);
             return;
         } else if (es != 0) {
             set_prompt_msg_errf(FAILED_TO_COPY_ERR_MSG ": exited with code %d", es);
