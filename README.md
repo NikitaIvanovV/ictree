@@ -56,11 +56,11 @@ Once you invoke the command, the UI should pop up.
 You can toggle folding of directories by hitting `Enter`.
 You can move around with arrow keys but if you know the Vi commands, they are supported too!
 
-You can press `y` to copy a selected item into X clipboard.
-Note that you must have `xsel` installed to use the command.
+You can press `y` to copy a selected item into X or Wayland clipboard.
+Note that you must have `xsel` or `wl-copy` installed (depending on whether you use X or Wayland) to use the command.
 
 You also can press `o` to write a path to standard output and exit program.
-It may be useful in a system without X environment.
+It may be useful in a system without a display server.
 
 Please read the manual (`man ictree`) for more details on existing commands and options.
 
