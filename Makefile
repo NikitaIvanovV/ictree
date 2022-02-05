@@ -49,10 +49,12 @@ uninstall:
 	$(RM) $(MANPREFIX)/man1/$(notdir ${MAN})
 
 clean:
-	$(RM) ${BIN} ${BINTAR} ${OBJ} ${DEP}
+	$(RM) ${BIN} ${OBJ} ${DEP} *.tar.gz *.zip
 	$(MAKE) -C ${TBDIR} clean
 
 dist: clean ${BINTAR}
+	./archive.sh tar.gz
+	./archive.sh zip
 
 .PHONY: all options install install.bin install.man uninstall clean dist
 
