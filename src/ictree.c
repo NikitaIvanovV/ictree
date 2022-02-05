@@ -804,7 +804,7 @@ static void catch_stop(int signo)
 static void copy_path(void)
 {
     char *full_path = NULL;
-    char *args[] = { "/bin/sh", "-c", "xsel --clipboard", NULL };
+    char *args[] = { "xsel", "--clipboard", NULL };
 
     int fd[2], fd_r, fd_w;
     if (pipe(fd) == -1) {
@@ -831,7 +831,7 @@ static void copy_path(void)
         dup2(fd_r, STDIN_FILENO);
         close(fd_r);
 
-        execv(args[0], args);
+        execvp(args[0], args);
         exit(EXIT_FAILURE);
     }
 
