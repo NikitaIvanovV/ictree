@@ -67,7 +67,7 @@ ${BUILDDIR}/%.o: %.c
 
 ${GENDIR}/options-msg.h:
 	@mkdir -p ${@D}
-	./gen-help.sh $< > $@
+	./gen-help.sh ${MAN} > $@
 
 ${BUILDDIR}/args.o: CFLAGS += -I${GENDIR}
 ${BUILDDIR}/args.o: ${GENDIR}/options-msg.h
