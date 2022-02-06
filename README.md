@@ -1,7 +1,5 @@
 # ictree
 
-Like tree but interactive
-
 ----
 
 Sometimes I need to find some file with `locate` or `find`.
