@@ -21,7 +21,7 @@
 
 #include "args.h"
 #include "error.h"
-#include "options-msg.h"
+#include "gen/options-msg.h"
 #include "version.h"
 
 #define VERSION_MSG         \

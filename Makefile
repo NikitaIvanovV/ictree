@@ -22,6 +22,7 @@ SRC    := $(wildcard ${SRCDIR}/*.c)
 OBJ    := ${SRC:${SRCDIR}/%.c=${BUILDDIR}/%.o}
 DEP    := ${OBJ:.o=.d}
 MAN    := ${DOCDIR}/ictree.1
+GEN    := ${GENDIR}/options-msg.h
 LOBJ   := ${TBOBJ}
 BINTAR := ${BIN}.tar.gz
 
@@ -33,6 +34,9 @@ options:
 	@echo "CC      = $(CC)"
 	@echo "CFLAGS  = $(CFLAGS)"
 	@echo "LDFLAGS = $(LDFLAGS)"
+
+generate:
+	$(MAKE) --always-make ${GEN}
 
 install: install.bin install.man
 
@@ -52,11 +56,11 @@ clean:
 	$(RM) ${BIN} ${OBJ} ${DEP} *.tar.gz *.zip
 	$(MAKE) -C ${TBDIR} clean
 
-dist: ${BINTAR}
+dist: generate ${BINTAR}
 	./archive.sh tar.gz
 	./archive.sh zip
 
-.PHONY: all options install install.bin install.man uninstall clean dist
+.PHONY: all options generate install install.bin install.man uninstall clean dist
 
 ${BIN}: ${OBJ} ${LOBJ}
 	$(CC) -o $@ $(LDFLAGS) $+
@@ -69,9 +73,6 @@ ${GENDIR}/options-msg.h:
 	@mkdir -p ${@D}
 	./gen-help.sh ${MAN} > $@
 
-${BUILDDIR}/args.o: CFLAGS += -I${GENDIR}
-${BUILDDIR}/args.o: ${GENDIR}/options-msg.h
-
 ${TBOBJ}:
 	$(MAKE) -C ${TBDIR} termbox.o
 
@@ -80,3 +81,5 @@ ${BINTAR}: clean
 	tar -czf $@ ${BIN}
 
 -include ${DEP}
+
+.DELETE_ON_ERROR:
