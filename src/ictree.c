@@ -622,7 +622,7 @@ static int draw(void)
             "failed to print prompt message");
 
     char ind[PROMPT_MAX_LEN];
-    snprintf(ind, PROMPT_MAX_LEN - PROMPT_RIGHT_PAD, "   %ld/%ld", paths.links[cursor_pos].index + 1, total_paths_l);
+    snprintf(ind, PROMPT_MAX_LEN - PROMPT_RIGHT_PAD, "   %zu/%zu", paths.links[cursor_pos].index + 1, total_paths_l);
     for (i = 0; i < PROMPT_RIGHT_PAD; i++) {
        strncat(ind, " ", PROMPT_MAX_LEN - 1);
     }
