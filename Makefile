@@ -65,7 +65,7 @@ ${BUILDDIR}/%.o: %.c
 	@mkdir -p ${@D}
 	$(CC) -c -o $@ $(CFLAGS) -MD $<
 
-${GENDIR}/options-msg.h: ${MAN} ./gen-help.sh
+${GENDIR}/options-msg.h:
 	@mkdir -p ${@D}
 	./gen-help.sh $< > $@
 
