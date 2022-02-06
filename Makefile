@@ -52,7 +52,7 @@ clean:
 	$(RM) ${BIN} ${OBJ} ${DEP} *.tar.gz *.zip
 	$(MAKE) -C ${TBDIR} clean
 
-dist: clean ${BINTAR}
+dist: ${BINTAR}
 	./archive.sh tar.gz
 	./archive.sh zip
 
@@ -75,7 +75,8 @@ ${BUILDDIR}/args.o: ${GENDIR}/options-msg.h
 ${TBOBJ}:
 	$(MAKE) -C ${TBDIR} termbox.o
 
-${BINTAR}: ${BIN}
-	tar -czf $@ $<
+${BINTAR}: clean
+	$(MAKE) CC=musl-gcc LDFLAGS=-static ${BIN}
+	tar -czf $@ ${BIN}
 
 -include ${DEP}
