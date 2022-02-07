@@ -49,6 +49,7 @@ extern FILE *debug_file;
     } while (0)
 #endif
 
+char *strdup(char *str);
 int size_t_compare(const void *a, const void *b);
 size_t find_first_nonblank(char *string);
 

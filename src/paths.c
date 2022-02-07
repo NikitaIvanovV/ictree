@@ -26,6 +26,23 @@
 #include "utils.h"
 #include "vector.h"
 
+#define REGEX_ERR_HANDLER(ret)                                    \
+    do {                                                          \
+        char err_buf[64];                                         \
+        regerror(ret, &search_ctx.reg, err_buf, LENGTH(err_buf)); \
+        set_errorf("regex failed: %s", err_buf);                  \
+    } while (0)
+
+typedef struct SearchContext {
+    regex_t reg;
+    char *pattern;
+    enum SearchDir dir;
+    int full_path;
+    int init;
+} SearchContext;
+
+static SearchContext search_ctx = { .init = 0 };
+
 static cvector_vector_type(Path) paths;
 
 /*
@@ -199,6 +216,35 @@ static void free_full_path(char *str)
     free(str);
 }
 
+static int init_search_ctx(SearchContext *ctx, char *pattern, enum SearchDir dir)
+{
+    int ret;
+
+    assert(!ctx->init);
+
+    ctx->pattern = strdup(pattern);
+
+    if ((ret = regcomp(&ctx->reg, ctx->pattern, REG_EXTENDED)) != 0)
+        return ret;
+
+    /* Perform search by full path if pattern contains DIR_DELIM */
+    ctx->full_path = strchr(ctx->pattern, DIR_DELIM) != NULL;
+
+    ctx->dir = dir;
+    ctx->init = 1;
+
+    return 0;
+}
+
+static void deinit_search_ctx(SearchContext *ctx)
+{
+    assert(ctx->init);
+
+    regfree(&ctx->reg);
+    free(ctx->pattern);
+    ctx->init = 0;
+}
+
 size_t get_paths(UnfoldedPaths *unfolded_paths, char **lines, size_t lines_l, PathState init_state)
 {
     Path p;
@@ -244,7 +290,7 @@ size_t get_paths(UnfoldedPaths *unfolded_paths, char **lines, size_t lines_l, Pa
         p.line = line;
         p.subpaths = NULL;
         p.subpaths_l = 0;
-        p.mainpath = NO_MAIN_PATH;
+        p.mainpath = NO_LINK;
         p.state = init_state;
         p.depth = depth;
         pl = (PathLink){ cvector_size(paths) };
@@ -297,55 +343,73 @@ void free_paths(UnfoldedPaths unfolded_paths)
         cvector_free(unfolded_paths.links);
         unfolded_paths.links = NULL;
     }
+
+    if (search_ctx.init) {
+        deinit_search_ctx(&search_ctx);
+    }
 }
 
-long search_path(PathLink **links, char *pattern)
+int init_paths_search(char *pattern, enum SearchDir dir)
 {
-    char err_buf[64], *s;
-    int ret, full_path;
-    regex_t reg;
+    int ret;
 
-    if ((ret = regcomp(&reg, pattern, REG_EXTENDED)) != 0) {
-        goto error;
+    if (search_ctx.init) {
+        deinit_search_ctx(&search_ctx);
     }
 
-    cvector_vector_type(PathLink) paths_vec = NULL;
+    if ((ret = init_search_ctx(&search_ctx, pattern, dir)) != 0) {
+        REGEX_ERR_HANDLER(ret);
+        return 1;
+    }
 
-    full_path = strchr(pattern, DIR_DELIM) != NULL;
+    return 0;
+}
 
-    for (size_t i = 0; i < cvector_size(paths); i++) {
-        s = full_path ? paths[i].full_path : paths[i].line;
-        ret = regexec(&reg, s, 0, NULL, 0);
-        if (!ret) {
-            cvector_push_back(paths_vec, (PathLink){ i });
-        } else if (ret != REG_NOMATCH) {
-            goto error_cleanup;
+enum MatchStatus path_match_pattern(Path *path)
+{
+    int ret;
+    char *s;
+
+    if (!search_ctx.init)
+        return MatchStatusFail;
+
+    s = search_ctx.full_path ? path->full_path : path->line;
+    ret = regexec(&search_ctx.reg, s, 0, NULL, 0);
+
+    if (ret == 0)
+        return MatchStatusOk;
+
+    if (ret == REG_NOMATCH) {
+        return MatchStatusFail;
+    }
+
+    REGEX_ERR_HANDLER(ret);
+    return MatchStatusErr;
+}
+
+int search_path(PathLink *match, PathLink start, int invert_dir)
+{
+    if (!search_ctx.init) {
+        set_error("Search query was not given");
+        return 1;
+    }
+
+    int dir = search_ctx.dir;
+    if (invert_dir)
+        dir *= -1;
+
+    long i = start.index + dir;
+    while (i < (long)cvector_size(paths) && i >= 0) {
+        enum MatchStatus st = path_match_pattern(paths + i);
+        if (st == 0) {
+            *match = (PathLink){ .index = i };
+            return 0;
+        } else if (st == MatchStatusErr) {
+            return 1;
         }
+        i += dir;
     }
 
-    regfree(&reg);
-
-    *links = paths_vec;
-
-    if (paths_vec == NULL) {
-        return 0;
-    } else {
-        return cvector_size(paths_vec);
-    }
-
-error_cleanup:
-    regfree(&reg);
-    if (paths_vec != NULL) {
-        cvector_free(paths_vec);
-    }
-
-error:
-    regerror(ret, &reg, err_buf, LENGTH(err_buf));
-    set_errorf("regex failed: %s", err_buf);
-    return -1;
-}
-
-void free_search_path(PathLink *links)
-{
-    cvector_free(links);
+    *match = NO_LINK;
+    return 0;
 }

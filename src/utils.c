@@ -16,6 +16,8 @@
  * ictree. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <assert.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "utils.h"
@@ -41,4 +43,17 @@ int size_t_compare(const void *a, const void *b)
     size_t a_i = *(size_t *)a, b_i = *(size_t *)b;
 
     return (a_i < b_i) ? -1 : (a_i > b_i);
+}
+
+char *strdup(char *str)
+{
+
+    unsigned long len = strlen(str);
+
+    char *dup = malloc((len + 1) * sizeof(char));
+    assert(dup != NULL);
+
+    strcpy(dup, str);
+
+    return dup;
 }

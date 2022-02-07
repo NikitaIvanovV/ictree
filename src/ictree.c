@@ -68,11 +68,6 @@
         }                          \
     } while (0)
 
-#define SEARCH_MODE_DIR                   \
-    (((search_mode) == ModeSearchForward) \
-         ? 1                              \
-         : ((search_mode) == ModeSearchBackward ? -1 : 0))
-
 typedef struct Pos {
     long x, y;
 } Pos;
@@ -94,10 +89,8 @@ struct SearchResults {
 };
 
 enum Mode {
-    ModeNormal = 1 << 0,
-    ModeSearchForward = 1 << 1,
-    ModeSearchBackward = 1 << 2,
-    ModeSearch = ModeSearchForward | ModeSearchBackward,
+    ModeNormal = 1,
+    ModeSearch = 2,
 };
 
 enum State {
@@ -121,9 +114,8 @@ static Lines lines;
 static UnfoldedPaths paths = { .links = NULL, .len = 0 };
 static size_t total_paths_l = 0;
 
-static struct SearchResults search_results = { .links = NULL, .positions = NULL, .len = 0 };
+static enum SearchDir search_dir;
 static char search_query[1024];
-static enum Mode search_mode;
 
 static Pos pager_pos = {0, 0};
 static long cursor_pos = 0;
@@ -135,11 +127,8 @@ static volatile enum State state;
 static int draw(void);
 static int fold(void);
 static int init_termbox(void);
-static int is_search_result(PathLink link, long pos);
-static int jump_to_search_result(int dir);
-static int next_result(void);
+static int is_search_result(Path *path);
 static int open_file(char *name);
-static int prev_result(void);
 static int run(void);
 static int setup_signals();
 static int unfold(void);
@@ -154,7 +143,6 @@ static void catch_term(int signo);
 static void center_cursor(void);
 static void cleanup_lines(void);
 static void cleanup_paths(void);
-static void cleanup_search_paths(void);
 static void cleanup_termbox(void);
 static void cleanup(void);
 static void copy_path(void);
@@ -162,6 +150,7 @@ static void cursor_move(int i);
 static void cursor_set(long p);
 static void init_options(void);
 static void init_search(int dir);
+static void next_result(int invert_search);
 static void output_path(void);
 static void print_error(char *error_msg);
 static void print_errorf(char *format, ...);
@@ -303,18 +292,7 @@ static int unfold(void)
         return 0;
     }
 
-    long off = unfold_path(&paths, cursor_pos);
-
-    for (size_t i = 0; i < search_results.len; i++) {
-        long *pos = search_results.positions + i;
-        if (*pos < 0) {
-            long new_pos = cursor_pos - (*pos);
-            if (PATH_LINKS_EQ(paths.links[new_pos], search_results.links[i]))
-                *pos = new_pos;
-        } else if (*pos > cursor_pos) {
-            (*pos) += off;
-        }
-    }
+    unfold_path(&paths, cursor_pos);
 
     return 1;
 }
@@ -325,18 +303,7 @@ static int fold(void)
         return 0;
     }
 
-    long off = fold_path(&paths, cursor_pos);
-
-    for (size_t i = 0; i < search_results.len; i++) {
-        long *pos = search_results.positions + i;
-        if (*pos > cursor_pos) {
-            if (*pos < cursor_pos + off + 1) {
-                *pos = -((*pos) - cursor_pos);
-            } else {
-                (*pos) -= off;
-            }
-        }
-    }
+    fold_path(&paths, cursor_pos);
 
     return 1;
 }
@@ -375,15 +342,17 @@ static void init_search(int dir)
 {
     switch (dir) {
     case 1:
-        mode = ModeSearchForward;
+        search_dir = SearchDirForward;
         break;
     case -1:
-        mode = ModeSearchBackward;
+        search_dir = SearchDirBackward;
         break;
     default:
         abort();
         break;
     }
+
+    mode = ModeSearch;
 
     set_search_prompt();
 }
@@ -397,40 +366,14 @@ static void quit_search(void)
 
 static void search(char *pattern)
 {
-    Path *p;
-    size_t pos;
-
-    cleanup_search_paths();
-
-    if (strlen(pattern) == 0) {
-        search_results.len = 0;
+    if (strlen(pattern) == 0)
         return;
+
+    if (init_paths_search(pattern, search_dir) != 0) {
+        set_prompt_msg_err(get_error());
     }
 
-    long len = search_path(&search_results.links, pattern);
-
-    if (len < 0) {
-        set_prompt_msg_errf("Search failed: %s", get_error());
-        return;
-    } else {
-        search_results.len = len;
-        if (len == 0) {
-            set_prompt_msg_err("Pattern not found");
-            return;
-        }
-    }
-
-    search_results.positions = malloc(search_results.len * sizeof(search_results.positions[0]));
-
-    for (size_t i = 0; i < search_results.len; i++) {
-        p = get_path_from_link(search_results.links[i]);
-        unfold_nested_path(&paths, p, &pos);
-        search_results.positions[i] = pos;
-    }
-
-    search_mode = mode;
-
-    next_result();
+    next_result(0);
 }
 
 static void update_search_input(struct tb_event ev)
@@ -452,53 +395,38 @@ static void reset_search_query(void)
     search_query[0] = '\0';
 }
 
-static int jump_to_search_result(int dir)
+static void next_result(int invert_search)
 {
-    if (search_results.len == 0)
-        return 1;
+    int ret;
+    Path *p;
+    PathLink result;
+    size_t pos;
 
-    assert(dir != 0);
+    ret = search_path(&result, paths.links[cursor_pos], invert_search);
+    if (ret != 0) {
+        set_prompt_msg_err(get_error());
+        return;
+    }
 
-    PathLink l;
-    long i, pos;
+    if (IS_NO_LINK(result)) {
+        set_prompt_msg_errf("Pattern not found");
+        return;
+    }
 
-    i = (dir > 0) ? 0 : search_results.len - 1;
-    do {
-        l = search_results.links[i];
-        if (get_path_from_link(l)->state == PathStateUnfolded) {
-            pos = search_results.positions[i];
-            if ((dir > 0) ? pos > cursor_pos : pos < cursor_pos) {
-                cursor_set(pos);
-                return 0;
-            }
-            i += dir;
-        }
-    } while ((dir > 0) ? i < (long)search_results.len : i >= 0);
-
-    char *s = ((dir > 0 && SEARCH_MODE_DIR == 1) || (dir < 0 && SEARCH_MODE_DIR == -1)) ? "Next" : "Previous";
-    set_prompt_msg_errf("%s search result not found", s);
-    return 0;
-}
-
-static int next_result(void)
-{
-    return jump_to_search_result(SEARCH_MODE_DIR);
-}
-
-static int prev_result(void)
-{
-    return jump_to_search_result(-SEARCH_MODE_DIR);
+    p = get_path_from_link(result);
+    unfold_nested_path(&paths, p, &pos);
+    cursor_set(pos);
 }
 
 static void set_search_prompt(void)
 {
     char *s;
 
-    switch (mode) {
-    case ModeSearchForward:
+    switch (search_dir) {
+    case SearchDirForward:
         s = "/";
         break;
-    case ModeSearchBackward:
+    case SearchDirBackward:
         s = "?";
         break;
     default:
@@ -512,17 +440,14 @@ static void set_search_prompt(void)
     tb_set_cursor(len + PROMPT_LEFT_PAD, TREE_VIEW_Y + PROMPT_HEIGHT - 1);
 }
 
-static int is_search_result(PathLink link, long pos)
+static int is_search_result(Path *path)
 {
-    long *p = bsearch(&pos, search_results.positions, search_results.len,
-                   sizeof(pos), size_t_compare);
+    enum MatchStatus st = path_match_pattern(path);
 
-    if (p == NULL) {
-        return 0;
-    }
+    if (st == MatchStatusOk)
+        return 1;
 
-    size_t i = p - search_results.positions;
-    return PATH_LINKS_EQ(link, search_results.links[i]);
+    return 0;
 }
 
 static void set_default_prompt(void)
@@ -575,7 +500,7 @@ static int draw(void)
         if (i == cursor_pos) {
             fg = TB_BLACK | TB_BOLD;
             bg = TB_WHITE;
-        } else if (is_search_result(paths.links[i], i)) {
+        } else if (is_search_result(path)) {
             fg = TB_BLACK;
             bg = TB_YELLOW;
         } else {
@@ -660,7 +585,7 @@ static int update_screen(void)
 
 static UpdScrSignal handle_key(struct tb_event ev)
 {
-    if (mode & ModeSearch) {
+    if (mode == ModeSearch) {
         if (ev.key == TB_KEY_ENTER) {
             search(search_query);
             quit_search();
@@ -727,9 +652,9 @@ static UpdScrSignal handle_key(struct tb_event ev)
     case '?':
         CONTROL_ACTION(init_search(-1));
     case 'n':
-        CONTROL_ACTION(next_result());
+        CONTROL_ACTION(next_result(0));
     case 'N':
-        CONTROL_ACTION(prev_result());
+        CONTROL_ACTION(next_result(1));
     case 'y':
         CONTROL_ACTION(copy_path());
     case 'o':
@@ -962,22 +887,9 @@ static void cleanup_lines(void)
     free_lines(&lines);
 }
 
-static void cleanup_search_paths(void)
-{
-    if (search_results.links != NULL) {
-        free_search_path(search_results.links);
-        search_results.links = NULL;
-    }
-    if (search_results.positions != NULL) {
-        free(search_results.positions);
-        search_results.positions = NULL;
-    }
-}
-
 static void cleanup_paths(void)
 {
     free_paths(paths);
-    cleanup_search_paths();
 }
 
 static void cleanup(void)
@@ -1055,7 +967,7 @@ init_tb:
         cleanup_termbox(); /* Restore initial terminal state */
         signal(SIGTSTP, SIG_DFL); /* Set default handler */
         raise(SIGTSTP); /* Stop process */
-        signal(SIGTSTP, catch_stop); /* Process is continued... */
+        signal(SIGTSTP, catch_stop); /* Process is continued: restore signal handler */
         goto init_tb; /* Init termbox again */
     }
 

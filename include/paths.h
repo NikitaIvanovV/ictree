@@ -23,9 +23,10 @@
 
 #include "vector.h"
 
-#define NO_MAIN_PATH        ((PathLink){ -1 })
+#define NO_LINK             ((PathLink){ -1 })
 #define PATH_LINKS_EQ(a, b) ((a).index == (b).index)
-#define HAS_MAIN_PATH(path) ((path).mainpath.index != NO_MAIN_PATH.index)
+#define IS_NO_LINK(link)    PATH_LINKS_EQ(link, NO_LINK)
+#define HAS_MAIN_PATH(link) (!IS_NO_LINK((link).mainpath))
 
 typedef enum PathState {
     PathStateUnfolded = 0,
@@ -51,13 +52,25 @@ typedef struct UnfoldedPaths {
     size_t len;
 } UnfoldedPaths;
 
+enum SearchDir {
+    SearchDirForward  = 1,
+    SearchDirBackward = -1,
+};
+
+enum MatchStatus {
+    MatchStatusOk,
+    MatchStatusFail,
+    MatchStatusErr,
+};
+
 Path *get_path_from_link(PathLink link);
-long search_path(PathLink **links, char *pattern);
+enum MatchStatus path_match_pattern(Path *path);
+int init_paths_search(char *pattern, enum SearchDir dir);
+int search_path(PathLink *match, PathLink start, int invert_dir);
 size_t fold_path(UnfoldedPaths *unfolded_paths, size_t i);
 size_t get_paths(UnfoldedPaths *unfolded_paths, char **lines, size_t lines_l, PathState init_state);
 size_t unfold_path(UnfoldedPaths *unfolded_paths, size_t i);
 void free_paths(UnfoldedPaths unfolded_paths);
-void free_search_path(PathLink *links);
 void unfold_nested_path(UnfoldedPaths *unfolded_paths, Path *path, size_t *pos);
 
 #endif
