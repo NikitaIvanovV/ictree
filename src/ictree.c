@@ -916,8 +916,10 @@ int main(int argc, char *argv[])
 
     ret = process_args(&options, argc, argv);
     switch (ret) {
-    case ArgActionError:
+    case ArgActionErrorReport:
         print_error(get_error());
+        return EXIT_FAILURE;
+    case ArgActionError:
         return EXIT_FAILURE;
     case ArgActionExit:
         return EXIT_SUCCESS;

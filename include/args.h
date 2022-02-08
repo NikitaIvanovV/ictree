@@ -25,6 +25,7 @@ enum ArgAction {
     ArgActionDefault,
     ArgActionExit,
     ArgActionError,
+    ArgActionErrorReport,
 };
 
 typedef struct Options {

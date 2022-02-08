@@ -18,6 +18,7 @@
 
 #include <getopt.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "args.h"
 #include "error.h"
@@ -30,48 +31,48 @@
 
 #define HELP_MSG "Usage: ictree [OPTION...] [FILE]\n" OPTIONS_MSG
 
-#define SHORT_OPTIONS "fvh"
-
 static struct option long_opts[] = {
-    { "fold", no_argument, 0, 'f' },
-    { "version", no_argument, 0, 'v' },
-    { "help", no_argument, 0, 'h' },
-    { 0, 0, 0, 0 },
+    { "fold",       no_argument,        NULL,  'f' },
+    { "version",    no_argument,        NULL,  'v' },
+    { "help",       no_argument,        NULL,  'h' },
+    { 0,            0,                  NULL,  0   },
 };
+
+#define SHORT_OPTIONS "fvh"
 
 enum ArgAction process_args(Options *options, int argc, char **argv)
 {
     int c;
-    int opt_i = 0;
-
-    /* Don't let getopt print errors */
-    opterr = 0;
 
     while (1) {
-        c = getopt_long(argc, argv, SHORT_OPTIONS, long_opts, &opt_i);
+        c = getopt_long(argc, argv, SHORT_OPTIONS, long_opts, NULL);
 
         if (c == -1)
             break;
 
         switch (c) {
+        case 0:
+            break;
         case 'f':
             options->init_paths_state = PathStateFolded;
-            opt_i++;
             break;
         case 'v':
             puts(VERSION_MSG);
             return ArgActionExit;
         case 'h':
-            printf("%s", HELP_MSG);
+            puts(HELP_MSG);
             return ArgActionExit;
-        default:
-            set_errorf("invalid option: %s", argv[opt_i + 1]);
+            break;
+        case '?':
             return ArgActionError;
+        default:
+            fprintf(stderr, "getopt() returned invalid code: %d\n", c);
+            abort();
         }
     }
 
-    if (opt_i + 1 < argc) {
-        options->filename = argv[opt_i + 1];
+    if (optind < argc) {
+        options->filename = argv[optind];
     }
 
     return ArgActionDefault;
