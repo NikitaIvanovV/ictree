@@ -29,7 +29,7 @@
 #define HAS_MAIN_PATH(link) (!IS_NO_LINK((link).mainpath))
 
 typedef enum PathState {
-    PathStateUnfolded = 0,
+    PathStateUnfolded,
     PathStateFolded,
 } PathState;
 
