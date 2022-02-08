@@ -46,7 +46,7 @@ static char *get_line(FILE *stream)
     return s;
 }
 
-Lines get_lines(FILE *stream)
+Lines get_lines(FILE *stream, char separator)
 {
     char *s;
 
@@ -59,9 +59,9 @@ Lines get_lines(FILE *stream)
         s = get_line(stream);
 
         /* Append / char if not already there */
-        if (cvector_size(s) - 2 != DIR_DELIM) {
-            cvector_pop_back(s);
-            cvector_push_back(s, DIR_DELIM);
+        if (s[cvector_size(s) - 2] != separator) {
+            cvector_pop_back(s); /* Remove '\0' */
+            cvector_push_back(s, separator);
             cvector_push_back(s, 0);
         }
 

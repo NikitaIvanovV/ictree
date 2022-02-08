@@ -29,7 +29,7 @@ typedef struct Lines {
     size_t lines_l;
 } Lines;
 
-Lines get_lines(FILE *stream);
+Lines get_lines(FILE *stream, char separator);
 void free_lines(Lines *lines);
 void sort_lines(Lines lines);
 

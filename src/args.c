@@ -33,12 +33,13 @@
 
 static struct option long_opts[] = {
     { "fold",       no_argument,        NULL,  'f' },
+    { "separator",  required_argument,  NULL,  's' },
     { "version",    no_argument,        NULL,  'v' },
     { "help",       no_argument,        NULL,  'h' },
     { 0,            0,                  NULL,  0   },
 };
 
-#define SHORT_OPTIONS "fvh"
+#define SHORT_OPTIONS "fs:vh"
 
 enum ArgAction process_args(Options *options, int argc, char **argv)
 {
@@ -56,9 +57,17 @@ enum ArgAction process_args(Options *options, int argc, char **argv)
         case 'f':
             options->init_paths_state = PathStateFolded;
             break;
+        case 's':
+            if (strlen(optarg) != 1) {
+                set_error("directory separator must a single character");
+                return ArgActionErrorReport;
+            }
+            options->separator = optarg[0];
+            break;
         case 'v':
             puts(VERSION_MSG);
             return ArgActionExit;
+            break;
         case 'h':
             puts(HELP_MSG);
             return ArgActionExit;

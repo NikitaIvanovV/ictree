@@ -68,7 +68,7 @@ enum MatchStatus path_match_pattern(Path *path);
 int init_paths_search(char *pattern, enum SearchDir dir);
 int search_path(PathLink *match, PathLink start, int invert_dir);
 size_t fold_path(UnfoldedPaths *unfolded_paths, size_t i);
-size_t get_paths(UnfoldedPaths *unfolded_paths, char **lines, size_t lines_l, PathState init_state);
+size_t get_paths(UnfoldedPaths *unfolded_paths, char **lines, size_t lines_l, char separator, PathState init_state);
 size_t unfold_path(UnfoldedPaths *unfolded_paths, size_t i);
 void free_paths(UnfoldedPaths unfolded_paths);
 void unfold_nested_path(UnfoldedPaths *unfolded_paths, Path *path, size_t *pos);

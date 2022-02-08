@@ -224,6 +224,7 @@ static void init_options(void)
 {
     options.filename = NULL;
     options.init_paths_state = PathStateUnfolded;
+    options.separator = '/';
 }
 
 static void scroll_x(int i)
@@ -946,9 +947,9 @@ int main(int argc, char *argv[])
 #endif
 
     /* Get and process input */
-    lines = get_lines(stream);
+    lines = get_lines(stream, options.separator);
     sort_lines(lines);
-    total_paths_l = get_paths(&paths, lines.lines, lines.lines_l, options.init_paths_state);
+    total_paths_l = get_paths(&paths, lines.lines, lines.lines_l, options.separator, options.init_paths_state);
 
 init_tb:
 

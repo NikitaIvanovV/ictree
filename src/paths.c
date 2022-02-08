@@ -45,6 +45,8 @@ static SearchContext search_ctx = { .init = 0 };
 
 static cvector_vector_type(Path) paths;
 
+static char sep;
+
 /*
  * Find length of the first component path component
  */
@@ -55,7 +57,7 @@ static unsigned long get_first_component_length(char *path)
 
     for (unsigned long i = 0; i < len; i++) {
         c = path[i];
-        if (c == DIR_DELIM) {
+        if (c == sep) {
             return i;
         }
     }
@@ -228,7 +230,7 @@ static int init_search_ctx(SearchContext *ctx, char *pattern, enum SearchDir dir
         return ret;
 
     /* Perform search by full path if pattern contains DIR_DELIM */
-    ctx->full_path = strchr(ctx->pattern, DIR_DELIM) != NULL;
+    ctx->full_path = strchr(ctx->pattern, sep) != NULL;
 
     ctx->dir = dir;
     ctx->init = 1;
@@ -245,13 +247,15 @@ static void deinit_search_ctx(SearchContext *ctx)
     ctx->init = 0;
 }
 
-size_t get_paths(UnfoldedPaths *unfolded_paths, char **lines, size_t lines_l, PathState init_state)
+size_t get_paths(UnfoldedPaths *unfolded_paths, char **lines, size_t lines_l, char separator, PathState init_state)
 {
     Path p;
     PathLink pl;
     char *line;
     size_t i;
     unsigned long comp_len, line_off, depth;
+
+    sep = separator;
 
     paths = NULL;
     unfolded_paths->links = NULL;
