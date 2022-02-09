@@ -28,6 +28,7 @@
 #include "args.h"
 #include "lines.h"
 #include "paths.h"
+#include "readline.h"
 #include "utils.h"
 #include "vector.h"
 
@@ -115,7 +116,7 @@ static UnfoldedPaths paths = { .links = NULL, .len = 0 };
 static size_t total_paths_l = 0;
 
 static enum SearchDir search_dir;
-static char search_query[1024];
+static ReadlineCtx search_query;
 
 static Pos pager_pos = {0, 0};
 static long cursor_pos = 0;
@@ -157,12 +158,12 @@ static void print_errorf(char *format, ...);
 static void quit_search(void);
 static void quit(void);
 static void reset_prompt_msg(void);
-static void reset_search_query(void);
 static void scroll_x(int i);
 static void scroll_y(int i);
 static void scroll_y_raw(int i);
-static void search(char *pattern);
+static void search(void);
 static void set_default_prompt(void);
+static void set_prompt_color(uint32_t fg, uint32_t bg);
 static void set_prompt_msg(char *msg);
 static void set_prompt_msg_err(char *msg);
 static void set_prompt_msg_errf(char *format, ...);
@@ -170,7 +171,7 @@ static void set_prompt_msgf(char *format, ...);
 static void set_search_prompt(void);
 static void stop(void);
 static void toggle_fold(void);
-static void update_search_input(struct tb_event ev);
+static void update_search_query(struct tb_event ev);
 
 static void print_error(char *error_msg)
 {
@@ -188,8 +189,12 @@ static void reset_prompt_msg(void)
 {
     memset(prompt_msg.msg, ' ', PROMPT_MAX_LEN);
     prompt_msg.msg[PROMPT_MAX_LEN] = '\0';
-    prompt_msg.bg = TB_WHITE;
-    prompt_msg.fg = TB_BLACK;
+}
+
+static void set_prompt_color(uint32_t fg, uint32_t bg)
+{
+    prompt_msg.fg = fg;
+    prompt_msg.bg = bg;
 }
 
 static void set_prompt_msg(char *msg)
@@ -197,6 +202,9 @@ static void set_prompt_msg(char *msg)
     reset_prompt_msg();
     memcpy(prompt_msg.msg + PROMPT_LEFT_PAD, msg,
            MIN(strlen(msg), PROMPT_MAX_LEN - PROMPT_LEFT_PAD));
+
+    /* Default prompt color */
+    set_prompt_color(TB_BLACK, TB_WHITE);
 }
 
 static void set_prompt_msgf(char *format, ...)
@@ -209,8 +217,7 @@ static void set_prompt_msgf(char *format, ...)
 static void set_prompt_msg_err(char *msg)
 {
     set_prompt_msg(msg);
-    prompt_msg.bg = TB_RED;
-    prompt_msg.fg = TB_WHITE;
+    set_prompt_color(TB_WHITE, TB_RED);
 }
 
 static void set_prompt_msg_errf(char *format, ...)
@@ -361,39 +368,72 @@ static void init_search(int dir)
 static void quit_search(void)
 {
     mode = ModeNormal;
-    reset_search_query();
     tb_hide_cursor();
+    set_default_prompt();
 }
 
-static void search(char *pattern)
+static void search(void)
 {
-    if (strlen(pattern) == 0)
+    if (search_query.line->len == 0)
         return;
 
-    if (init_paths_search(pattern, search_dir) != 0) {
+    if (init_paths_search(search_query.line->buf, search_dir) != 0) {
         set_prompt_msg_err(get_error());
+        return;
     }
 
     next_result(0);
 }
 
-static void update_search_input(struct tb_event ev)
+static void update_search_query(struct tb_event ev)
 {
-    char buf[] = {0, 0};
+    int draw_s_prompt = 1;
+    int type = -1;
+    char ch = ev.ch;
 
-    if (ev.ch != 0) {
-        buf[0] = ev.ch;
-        strncat(search_query, buf, LENGTH(search_query) - 1);
-    } else if (ev.key == TB_KEY_BACKSPACE2) {
-        search_query[strlen(search_query) - 1] = '\0';
+    if (ch) {
+        type = ReadlineType;
+    } else {
+        switch (ev.key) {
+        case TB_KEY_ENTER:
+            quit_search();
+            search();
+            draw_s_prompt = 0;
+            type = ReadlineEnter;
+            break;
+        case TB_KEY_ESC:
+            quit_search();
+            draw_s_prompt = 0;
+            type = ReadlineClear;
+            break;
+        case TB_KEY_BACKSPACE2:
+            type = ReadlineBackspace;
+            break;
+        case TB_KEY_DELETE:
+            type = ReadlineDelete;
+            break;
+        case TB_KEY_ARROW_LEFT:
+            type = ReadlineCurLeft;
+            break;
+        case TB_KEY_ARROW_RIGHT:
+            type = ReadlineCurRight;
+            break;
+        case TB_KEY_ARROW_UP:
+            type = ReadlineHistUp;
+            break;
+        case TB_KEY_ARROW_DOWN:
+            type = ReadlineHistDown;
+            break;
+        default:
+            return;
+        }
     }
 
-    set_search_prompt();
-}
+    if (type >= 0)
+        readline_send(&search_query, (ReadlineEvent){ .type = type, .ch = ch });
 
-static void reset_search_query(void)
-{
-    search_query[0] = '\0';
+    if (draw_s_prompt)
+        set_search_prompt();
 }
 
 static void next_result(int invert_search)
@@ -436,9 +476,12 @@ static void set_search_prompt(void)
     }
 
     char msg[PROMPT_MAX_LEN];
-    int len = snprintf(msg, LENGTH(msg) - 1, "%s%s", s, search_query);
+    snprintf(msg, LENGTH(msg) - 1, "%s%s", s, search_query.line->buf);
+
     set_prompt_msg(msg);
-    tb_set_cursor(len + PROMPT_LEFT_PAD, TREE_VIEW_Y + PROMPT_HEIGHT - 1);
+    set_prompt_color(TB_WHITE, TB_DEFAULT);
+
+    tb_set_cursor(search_query.cursor + 1 + PROMPT_LEFT_PAD, TREE_VIEW_Y + PROMPT_HEIGHT - 1);
 }
 
 static int is_search_result(Path *path)
@@ -587,14 +630,7 @@ static int update_screen(void)
 static UpdScrSignal handle_key(struct tb_event ev)
 {
     if (mode == ModeSearch) {
-        if (ev.key == TB_KEY_ENTER) {
-            search(search_query);
-            quit_search();
-        } else if (ev.key == TB_KEY_ESC) {
-            quit_search();
-        } else {
-            update_search_input(ev);
-        }
+        update_search_query(ev);
         return UpdScrSignalYes;
     }
 
@@ -901,6 +937,7 @@ static void cleanup(void)
     if (stream_file) {
         fclose(stream);
     }
+    cleanup_readline_ctx(&search_query);
 #ifdef DEV
     if (debug_file != NULL)
         fclose(debug_file);
@@ -932,6 +969,8 @@ int main(int argc, char *argv[])
             return EXIT_FAILURE;
         }
     }
+
+    init_readline_ctx(&search_query);
 
     if (setup_signals() != 0) {
         print_error(get_error());
