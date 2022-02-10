@@ -60,7 +60,7 @@ Note that you must have `xsel` or `wl-copy` installed (depending on whether you 
 You also can press `o` to write a path to standard output and exit program.
 It may be useful in a system without a display server.
 
-You can define custom commands in a configuration file to open selected path in another program (e.g. an image viewer or a text editor).
+You can define custom commands in a configuration file to open selected path in another program (e.g. an image viewer or a text editor):
 
 ```
 # open file in $EDITOR
