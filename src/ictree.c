@@ -26,6 +26,7 @@
 #include <unistd.h>
 
 #include "args.h"
+#include "config.h"
 #include "lines.h"
 #include "paths.h"
 #include "readline.h"
@@ -125,6 +126,9 @@ static PromptMsg prompt_msg;
 
 static volatile enum State state;
 
+static Command *command = NULL;
+
+static int cleanup_termbox(void);
 static int draw(void);
 static int fold(void);
 static int init_termbox(void);
@@ -144,7 +148,6 @@ static void catch_term(int signo);
 static void center_cursor(void);
 static void cleanup_lines(void);
 static void cleanup_paths(void);
-static void cleanup_termbox(void);
 static void cleanup(void);
 static void copy_path(void);
 static void cursor_move(int i);
@@ -158,6 +161,7 @@ static void print_errorf(char *format, ...);
 static void quit_search(void);
 static void quit(void);
 static void reset_prompt_msg(void);
+static void run_command(char *cmd);
 static void scroll_x(int i);
 static void scroll_y(int i);
 static void scroll_y_raw(int i);
@@ -634,6 +638,13 @@ static UpdScrSignal handle_key(struct tb_event ev)
         return UpdScrSignalYes;
     }
 
+    for (Command *cmd = command; cmd; cmd = cmd->next) {
+        if (ev.ch == (uint32_t)cmd->ch) {
+            run_command(cmd->cmd);
+            return UpdScrSignalYes;
+        }
+    }
+
     switch (ev.key) {
     case TB_KEY_CTRL_E:
         CONTROL_ACTION(scroll_y(SCROLL_Y));
@@ -748,7 +759,8 @@ static int setup_signals()
 
 static void catch_error(int signo)
 {
-    cleanup_termbox();
+    if (cleanup_termbox() != 0)
+        print_error(get_error());
 }
 
 static void catch_term(int signo)
@@ -761,7 +773,76 @@ static void catch_stop(int signo)
     stop();
 }
 
-#define FAILED_TO_COPY_ERR_MSG "Failed to copy"
+#define FAILED_TO_RUN_CMD_ERR_MSG "Failed to run command: "
+
+static void run_command(char *cmd)
+{
+    if (cleanup_termbox() != 0) {
+        set_prompt_msg_err(get_error());
+        return;
+    }
+
+    Path *p = get_path_from_link(paths.links[cursor_pos]);
+    char *full_path = p->full_path;
+
+    int err_p[2];
+    if (pipe(err_p) == -1) {
+        set_prompt_msg_err(FAILED_TO_RUN_CMD_ERR_MSG "pipe() failed");
+        goto cleanup;
+    }
+
+    int pid = fork();
+    if (pid == -1) {
+        set_prompt_msg_err(FAILED_TO_RUN_CMD_ERR_MSG "fork() failed");
+        goto cleanup;
+    } else if (pid == 0) {
+        close(err_p[0]);
+
+        dup2(err_p[1], STDERR_FILENO);
+        close(err_p[1]);
+
+        int tty = open("/dev/tty", O_RDONLY);
+        dup2(tty, STDIN_FILENO);
+        close(tty);
+
+        dup2(err_p[1], STDERR_FILENO);
+        close(err_p[1]);
+
+        static char sh[] = "/bin/sh";
+
+        setenv("f", full_path, 1);
+        execl(sh, sh, "-c", cmd, NULL);
+        exit(EXIT_FAILURE);
+    }
+
+    close(err_p[1]);
+
+    int status;
+    if (waitpid(pid, &status, 0) == -1) {
+        set_prompt_msg_err(FAILED_TO_RUN_CMD_ERR_MSG "waitpid() failed");
+        goto cleanup;
+    }
+
+    int es;
+    if (WIFEXITED(status) && (es = WEXITSTATUS(status)) != 0) {
+        static char buf[ERROR_BUF_SIZE];
+        ssize_t n = read(err_p[0], buf, ERROR_BUF_SIZE - 1);
+        if (n == -1) {
+            set_prompt_msg_err(FAILED_TO_RUN_CMD_ERR_MSG "read() failed");
+        } else if (n > 0) {
+            buf[n-1] = '\0';
+            set_prompt_msg_err(buf);
+        } else {
+            set_prompt_msg_errf("%s exited with status %d", cmd, es);
+        }
+    }
+
+cleanup:
+    init_termbox();
+    close(err_p[0]);
+}
+
+#define FAILED_TO_COPY_ERR_MSG "Failed to copy: "
 
 static void copy_path(void)
 {
@@ -771,7 +852,7 @@ static void copy_path(void)
 
     int fd[2], fd_r, fd_w;
     if (pipe(fd) == -1) {
-        set_prompt_msg_err(FAILED_TO_COPY_ERR_MSG ": pipe() failed");
+        set_prompt_msg_err(FAILED_TO_COPY_ERR_MSG "pipe() failed");
         return;
     }
 
@@ -780,7 +861,7 @@ static void copy_path(void)
 
     int pid = fork();
     if (pid == -1) {
-        set_prompt_msg_err(FAILED_TO_COPY_ERR_MSG ": fork() failed");
+        set_prompt_msg_err(FAILED_TO_COPY_ERR_MSG "fork() failed");
         return;
     } else if (pid == 0) {
         close(fd_w);
@@ -796,10 +877,10 @@ static void copy_path(void)
 
         execvp(xsel_args[0], xsel_args);
         if (errno == ENOENT) {
-          execvp(wl_copy_args[0], wl_copy_args);
-          if (errno == ENOENT) {
-            exit(127);
-          }
+            execvp(wl_copy_args[0], wl_copy_args);
+            if (errno == ENOENT) {
+                exit(127);
+            }
         }
         exit(EXIT_FAILURE);
     }
@@ -811,23 +892,23 @@ static void copy_path(void)
     full_path = p->full_path;
 
     if (write(fd_w, full_path, strlen(full_path) + 1) == -1) {
-        set_prompt_msg_err(FAILED_TO_COPY_ERR_MSG ": write() failed");
+        set_prompt_msg_err(FAILED_TO_COPY_ERR_MSG "write() failed");
         return;
     }
     close(fd_w);
 
     if (waitpid(pid, &status, 0) == -1) {
-        set_prompt_msg_err(FAILED_TO_COPY_ERR_MSG ": waitpid() failed");
+        set_prompt_msg_err(FAILED_TO_COPY_ERR_MSG "waitpid() failed");
         return;
     }
 
     if (WIFEXITED(status)) {
         int es = WEXITSTATUS(status);
         if (es == 127) {
-            set_prompt_msg_errf(FAILED_TO_COPY_ERR_MSG ": neither xsel nor wl-copy were found", es);
+            set_prompt_msg_errf(FAILED_TO_COPY_ERR_MSG "neither xsel nor wl-copy were found", es);
             return;
         } else if (es != 0) {
-            set_prompt_msg_errf(FAILED_TO_COPY_ERR_MSG ": exited with code %d", es);
+            set_prompt_msg_errf(FAILED_TO_COPY_ERR_MSG "exited with code %d", es);
             return;
         }
     }
@@ -901,22 +982,28 @@ static int open_file(char *name)
 
 static int init_termbox(void)
 {
-    int ret;
-    if ((ret = tb_init()) != TB_OK) {
+    int ret = tb_init();
+    if (ret != TB_OK) {
         set_errorf("failed to init termbox: %s", tb_strerror(ret));
         return 1;
     }
+
+    tb_set_input_mode(TB_INPUT_ESC | TB_INPUT_MOUSE);
+    tb_hide_cursor();
 
     state = StateRunning;
     return 0;
 }
 
-static void cleanup_termbox(void)
+static int cleanup_termbox(void)
 {
     int ret = tb_shutdown();
-    if (ret == TB_OK || ret == TB_ERR_NOT_INIT)
-        return;
-    print_errorf("failed to shutdown termbox: %s", tb_strerror(ret));
+    if (ret == TB_OK || ret == TB_ERR_NOT_INIT) {
+        return 0;
+    }
+
+    set_errorf("failed to shutdown termbox: %s", tb_strerror(ret));
+    return 1;
 }
 
 static void cleanup_lines(void)
@@ -938,6 +1025,7 @@ static void cleanup(void)
         fclose(stream);
     }
     cleanup_readline_ctx(&search_query);
+    free_command(command);
 #ifdef DEV
     if (debug_file != NULL)
         fclose(debug_file);
@@ -970,6 +1058,11 @@ int main(int argc, char *argv[])
         }
     }
 
+    if (read_config(&command) != 0) {
+        print_error(get_error());
+        return EXIT_FAILURE;
+    }
+
     init_readline_ctx(&search_query);
 
     if (setup_signals() != 0) {
@@ -998,9 +1091,6 @@ init_tb:
         cleanup();
         return EXIT_FAILURE;
     }
-
-    tb_set_input_mode(TB_INPUT_ESC | TB_INPUT_MOUSE);
-    tb_hide_cursor();
 
     ret = run();
 

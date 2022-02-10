@@ -37,7 +37,7 @@ void set_errorf(char *format, ...)
     set_error(msg);
 }
 
-char *get_error()
+char *get_error(void)
 {
     return error_buf;
 }

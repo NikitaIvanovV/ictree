@@ -16,13 +16,18 @@
  * ictree. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef ERROR_H
-#define ERROR_H
+#ifndef CONFIG_H
+#define CONFIG_H
 
-#define ERROR_BUF_SIZE 256
+#define CMD_MAX_LEN 128
 
-void set_error(char *);
-void set_errorf(char *format, ...);
-char *get_error(void);
+typedef struct Command {
+    char ch;
+    char cmd[CMD_MAX_LEN];
+    struct Command *next;
+} Command;
+
+int read_config(Command **command);
+void free_command(Command *command);
 
 #endif

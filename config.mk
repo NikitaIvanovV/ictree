@@ -12,7 +12,7 @@ GENDIR   := gen
 BUILDDIR := build
 
 # Flags
-CFLAGS += -std=c99 -pedantic -Wall -Wextra -Wno-unused-parameter
+CFLAGS += -std=gnu99 -pedantic -Wall -Wextra -Wno-unused-parameter
 CFLAGS += -I${INCDIR} -I.
 
 ifeq ($(ENV),dev)
