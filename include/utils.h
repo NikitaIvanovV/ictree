@@ -37,13 +37,17 @@
     } while (0);
 
 #ifdef DEV
-extern FILE *debug_file;
+
 #define DEBUG_FILE "debug"
+
 #define DEBUG(...)                        \
     do {                                  \
         fprintf(debug_file, __VA_ARGS__); \
         fflush(debug_file);               \
     } while (0)
+
+extern FILE *debug_file;
+
 #endif
 
 int size_t_compare(const void *a, const void *b);

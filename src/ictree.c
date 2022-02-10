@@ -1080,7 +1080,8 @@ int main(int argc, char *argv[])
     lines = get_lines(stream, options.separator);
 
     if (lines.lines_l <= 0) {
-        print_error("file seems to be empty");
+        char *s = stream_file ? "file" : "input";
+        print_errorf("%s seems to be empty", s);
         cleanup();
         return EXIT_FAILURE;
     }
