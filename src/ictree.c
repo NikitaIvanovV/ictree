@@ -677,6 +677,8 @@ static UpdScrSignal handle_key(struct tb_event ev)
     switch (ev.ch) {
     case ' ':
         CONTROL_ACTION(toggle_fold(); scroll_y(SCROLL_Y));
+    case 'c':
+        CONTROL_ACTION(goto_parent(); fold());
     case 'q':
         CONTROL_ACTION(quit());
     case 'j':
