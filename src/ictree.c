@@ -969,11 +969,7 @@ static int open_file(char *name)
     ret = errno;
 
     if (f == NULL) {
-        if (errno == ENOENT) {
-            set_errorf("file '%s' does not exist", name);
-        } else {
-            set_errorf("failed to open file '%s': %d", name, ret);
-        }
+        set_errorf("%s: %s", name, strerror(ret));
         return 1;
     }
 
