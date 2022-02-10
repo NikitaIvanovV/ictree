@@ -1080,6 +1080,13 @@ int main(int argc, char *argv[])
 
     /* Get and process input */
     lines = get_lines(stream, options.separator);
+
+    if (lines.lines_l <= 0) {
+        print_error("file seems to be empty");
+        cleanup();
+        return EXIT_FAILURE;
+    }
+
     sort_lines(lines);
     total_paths_l = get_paths(&paths, lines.lines, lines.lines_l, options.separator, options.init_paths_state);
 

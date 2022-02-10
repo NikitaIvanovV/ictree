@@ -327,7 +327,8 @@ size_t get_paths(UnfoldedPaths *unfolded_paths, char **lines, size_t lines_l, ch
         depth++;
     }
 
-    cvector_free(stack);
+    if (stack != NULL)
+        cvector_free(stack);
     unfolded_paths->len = cvector_size(unfolded_paths->links);
     return cvector_size(paths);
 }
