@@ -77,7 +77,7 @@ ${TBOBJ}:
 	$(MAKE) -C ${TBDIR} termbox.o
 
 ${BINTAR}: clean
-	$(MAKE) CC=musl-gcc LDFLAGS=-static ${BIN}
+	LDFLAGS=-static $(MAKE) CC=musl-gcc ${BIN}
 	tar -czf $@ ${BIN}
 
 -include ${DEP}
