@@ -54,7 +54,8 @@ locate something > list.txt
 ictree list.txt
 .EEE
 .PP
-ictree supports
+.BR ictree
+supports
 .IR vi -like
 search functionality.
 Extended regular expressions are supported.
@@ -169,6 +170,33 @@ Quit
 .BR ^Z
 Suspend ictree
 .
+.SH CUSTOM COMMANDS
+It's possible to define custom commands in the configuration file (see
+.IR FILES )
+to open a selected path in other programs.
+.PP
+Examples:
+.EXX
+# open selected path in vim by pressing e
+map e vim $f
+.PP
+# open selected path in a pager
+# defined in $PAGER environment variable
+map i $PAGER $f
+.EEE
+.PP
+When a custom command is invoked,
+.BR ictree
+simply runs a program with
+.IR /bin/sh
+and sets
+.BR $f
+variable to whatever a user has selected.
+.PP
+Note: unlike
+.IR Vim ,
+it's impossible to use more than one character in a mapping.
+.
 .SH OPTIONS
 .TP
 .BR \-\-fold ,\  \-f
@@ -190,6 +218,16 @@ Display version information and exit.
 .
 .SH SEE ALSO
 tree(1), find(1), locate(1), less(1)
+.
+.SH FILES
+.TP
+.B $XDG_CONFIG_PATH/ictree/config
+Configuration file.
+If
+.B $XDG_CONFIG_PATH
+is not defined,
+.B $HOME/.config
+is used instead.
 .
 .SH AUTHOR
 Written by Nikita Ivanov.
