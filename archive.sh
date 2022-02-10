@@ -10,14 +10,13 @@ format="$1"
 
 list="$(mktemp archive-list.XXXXXX)"
 
-git ls-files >> "$list"
-git submodule foreach --recursive --quiet 'git ls-files | sed "s/^/$displaypath\//"' >> "$list"
+git ls-files --full-name --recurse-submodules >> "$list"
 
 file="ictree-$(git describe).$format"
 
 case "$format" in
     tar.gz)
-        tar -czf "$file" -T "$list"
+        tar -czf "$file" --no-recursion --verbatim-files-from -T "$list"
         ;;
     zip)
         zip -q "$file" -@ < "$list"
