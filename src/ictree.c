@@ -48,7 +48,6 @@
 #define ICON_STATUS_DEFAULT  "• "
 #define ICON_STATUS_FOLDED   "▶ "
 #define ICON_STATUS_UNFOLDED "▼ "
-#define ICON_ROOT_DIR        "/"
 
 #define PROMPT_MAX_LEN   255
 #define PROMPT_LEFT_PAD  1
@@ -530,7 +529,7 @@ static int draw(void)
         indent = path->depth * INDENT;
 
         if (strlen(path_line) == 0)
-            path_line = ICON_ROOT_DIR;
+            path_line = (char []){ options.separator, '\0' };
 
         first_c_x = pager_pos.x - indent;
 
