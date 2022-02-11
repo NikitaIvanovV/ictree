@@ -10,7 +10,7 @@ format="$1"
 
 list="$(mktemp archive-list.XXXXXX)"
 
-git ls-files --full-name --recurse-submodules >> "$list"
+git ls-files --full-name --recurse-submodules > "$list"
 
 file="ictree-$(git describe).$format"
 
