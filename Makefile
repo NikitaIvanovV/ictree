@@ -60,7 +60,8 @@ dist: generate ${BINTAR}
 	./archive.sh tar.gz
 	./archive.sh zip
 
-.PHONY: all options generate install install.bin install.man uninstall clean dist
+.PHONY: all options generate install install.bin \
+	install.man uninstall clean dist
 
 ${BIN}: ${OBJ} ${LOBJ}
 	$(CC) -o $@ $(LDFLAGS) $+

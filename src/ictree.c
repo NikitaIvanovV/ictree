@@ -512,12 +512,10 @@ static int draw(void)
 
     /* Draw tree */
 
-    y = 0;
-    while (y < TREE_VIEW_Y) {
+    for (y = 0; y < TREE_VIEW_Y; y++) {
         i = pager_pos.y + y;
 
         if (i < 0) {
-            y++;
             continue;
         } else if (i >= MAX_PATHS) {
             break;
@@ -578,7 +576,6 @@ static int draw(void)
             RETURN_ON_TB_ERROR(
                     tb_set_cell(0, y, '<', TB_BLACK, TB_WHITE),
                     "failed to print '<' symbol");
-        y++;
     }
 
     /* Draw prompt */
@@ -598,6 +595,7 @@ static int draw(void)
     for (i = 0; i < PROMPT_RIGHT_PAD; i++) {
        strncat(ind, " ", PROMPT_MAX_LEN - 1);
     }
+
     x = TREE_VIEW_X - strlen(ind);
     RETURN_ON_TB_ERROR(
             tb_print(x, y, fg, bg, ind),
