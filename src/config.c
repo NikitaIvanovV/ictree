@@ -170,9 +170,9 @@ int read_config(Command **cmd)
 
     static char config_path[FILENAME_MAX];
 
-    char *dir_path = getenv("XDG_CONFIG_PATH");
-    if (dir_path != NULL) {
-        strncpy(config_path, dir_path, FILENAME_MAX - 1);
+    char *xdg_conf_p = getenv("XDG_CONFIG_PATH");
+    if (xdg_conf_p != NULL) {
+        strncpy(config_path, xdg_conf_p, FILENAME_MAX - 1);
     } else {
         strncpy(config_path, getenv("HOME"), FILENAME_MAX - 1);
         strncat(config_path, "/.config", FILENAME_MAX - 1);
