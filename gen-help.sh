@@ -1,12 +1,30 @@
 #!/bin/sh
 
-text="$(MANWIDTH=80 man -P cat -l "$1")" || exit 1
+text="$(MANWIDTH=80 man -P cat -l "$1")" || {
+    echo 'Error: failed to get man page content' >&2
+    exit 1
+}
 
-echo '#define OPTIONS_MSG \'
-echo '"\\n" \'
-echo '"Options:\\n" \'
-echo "$text" |
-    sed -n '/^OPTIONS/,$p' |
-    sed '1d;  /^[A-Z]/q' |
-    sed '$d; s/^/"/; s/$/\\n" \\/' |
-    sed '$s/ \\$//'
+body() {
+    echo "$text" |
+        sed -n "/^$1/,/^[A-Z]/"'{/^[A-Z]\|^\s*$/!p}'
+}
+
+rm_indent() {
+    sed 's/^\s*//'
+}
+
+make_macro() {
+    echo "#define $1 \\"
+    sed -e 's/^/"/' -e 's/$/"/' -e '$!s/$/ "\\n" \\/'
+}
+
+msg() {
+    printf 'Usage:\t'
+    body SYNOPSIS | rm_indent
+    echo
+    echo 'Options:'
+    body OPTIONS
+}
+
+msg | make_macro 'HELP_MSG'

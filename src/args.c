@@ -22,14 +22,13 @@
 
 #include "args.h"
 #include "error.h"
-#include "gen/options-msg.h"
 #include "version.h"
 
 #define VERSION_MSG         \
     "ictree v" VERSION "\n" \
     "Copyright 2022 Nikita Ivanov"
 
-#define HELP_MSG "Usage: ictree [OPTION...] [FILE]\n" OPTIONS_MSG
+#include "gen/help-msg.h"
 
 static struct option long_opts[] = {
     { "fold",       no_argument,        NULL,  'f' },

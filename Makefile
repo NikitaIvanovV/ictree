@@ -22,7 +22,7 @@ SRC    := $(wildcard ${SRCDIR}/*.c)
 OBJ    := ${SRC:${SRCDIR}/%.c=${BUILDDIR}/%.o}
 DEP    := ${OBJ:.o=.d}
 MAN    := ${DOCDIR}/ictree.1
-GEN    := ${GENDIR}/options-msg.h
+GEN    := ${GENDIR}/help-msg.h
 LOBJ   := ${TBOBJ}
 BINTAR := ${BIN}.tar.gz
 
@@ -70,7 +70,7 @@ ${BUILDDIR}/%.o: %.c
 	@mkdir -p ${@D}
 	$(CC) -c -o $@ $(CFLAGS) -MD $<
 
-${GENDIR}/options-msg.h:
+${GENDIR}/help-msg.h:
 	@mkdir -p ${@D}
 	./gen-help.sh ${MAN} > $@
 
