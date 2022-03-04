@@ -291,12 +291,13 @@ size_t get_paths(UnfoldedPaths *unfolded_paths, char **lines, size_t lines_l, ch
             line[comp_len] = '\0';
         }
 
-        p.line = line;
-        p.subpaths = NULL;
+        p.line       = line;
+        p.subpaths   = NULL;
         p.subpaths_l = 0;
-        p.mainpath = NO_LINK;
-        p.state = init_state;
-        p.depth = depth;
+        p.mainpath   = NO_LINK;
+        p.state      = init_state;
+        p.depth      = depth;
+
         pl = (PathLink){ cvector_size(paths) };
 
         if (depth < cvector_size(stack)) {
