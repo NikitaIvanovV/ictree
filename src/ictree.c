@@ -83,12 +83,6 @@ typedef struct PromptMsg {
     uint32_t fg, bg;
 } PromptMsg;
 
-struct SearchResults {
-    PathLink *links;
-    long *positions;
-    size_t len;
-};
-
 enum Mode {
     ModeNormal = 1,
     ModeSearch = 2,
