@@ -1,7 +1,5 @@
 # ictree
 
-----
-
 Sometimes I need to find some file with `locate` or `find`.
 I use the command but, instead of getting several lines of output that are easy to look through, I get hundreds of them...
 Then I try to pipe that mess into `tree --fromfile . | less`, hoping that it will be less of a pain to find what I'm looking for. But it's not always the case: you cannot fold directories you're not interested in within less, so you have to hold ^F...
