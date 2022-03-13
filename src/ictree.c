@@ -31,7 +31,6 @@
 #include "paths.h"
 #include "readline.h"
 #include "utils.h"
-#include "vector.h"
 
 #define SCREEN_X      tb_width()
 #define SCREEN_Y      tb_height()
