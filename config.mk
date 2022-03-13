@@ -9,6 +9,7 @@ SRCDIR   := src
 INCDIR   := include
 DOCDIR   := doc
 GENDIR   := gen
+LIBDIR   := lib
 BUILDDIR := build
 
 # Flags
@@ -23,10 +24,10 @@ LDFLAGS += -s
 endif
 
 # Termbox2 lib
-TBDIR  := termbox2
+TBDIR  := ${LIBDIR}/termbox2
 TBOBJ  := ${TBDIR}/termbox.o
 CFLAGS += -I${TBDIR}
 
 # c_vector lib
-CVDIR  := c-vector
+CVDIR  := ${LIBDIR}/c-vector
 CFLAGS += -I${CVDIR}
