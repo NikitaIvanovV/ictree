@@ -49,13 +49,13 @@ ictree list.txt
 ```
 
 Once you invoke the command, the UI should pop up.
-You can toggle folding of directories by hitting `Enter`.
+You can toggle folding of directories by hitting <kbd>Enter</kbd>.
 You can move around with arrow keys but if you know the Vi commands, they are supported too!
 
-You can press `y` to copy a selected item into X or Wayland clipboard.
+You can press <kbd>y</kbd> to copy a selected item into X or Wayland clipboard.
 Note that you must have `xsel` or `wl-copy` installed (depending on whether you use X or Wayland) to use the command.
 
-You also can press `o` to write a path to standard output and exit program.
+You also can press <kbd>o</kbd> to write a path to standard output and exit program.
 It may be useful in a system without a display server.
 
 You can define custom commands in a configuration file to open selected path in another program (e.g. an image viewer or a text editor):
