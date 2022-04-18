@@ -1,5 +1,5 @@
 #define HELP_MSG \
-"Usage:	ictree [OPTION...]  [FILE]" "\n" \
+"Usage:	ictree [OPTION]...  [FILE]" "\n" \
 "" "\n" \
 "Options:" "\n" \
 "       --fold, -f" "\n" \
