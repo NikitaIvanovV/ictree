@@ -170,7 +170,7 @@ int read_config(Command **cmd)
 
     static char config_path[FILENAME_MAX];
 
-    char *xdg_conf_p = getenv("XDG_CONFIG_PATH");
+    char *xdg_conf_p = getenv("XDG_CONFIG_HOME");
     if (xdg_conf_p != NULL) {
         strncpy(config_path, xdg_conf_p, FILENAME_MAX - 1);
     } else {
