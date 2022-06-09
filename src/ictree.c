@@ -131,6 +131,7 @@ static int setup_signals(void);
 static int unfold(void);
 static int update_screen(void);
 static UpdScrSignal goto_parent(void);
+static UpdScrSignal goto_parent_or_fold(void);
 static UpdScrSignal handle_key(struct tb_event ev);
 static UpdScrSignal handle_mouse_click(int x, int y);
 static UpdScrSignal handle_mouse(struct tb_event ev);
@@ -322,6 +323,18 @@ static void toggle_fold(void)
         assert(fold() == 1);
         break;
     }
+}
+
+static UpdScrSignal goto_parent_or_fold(void)
+{
+    switch (get_path_from_link(paths.links[cursor_pos])->state) {
+    case PathStateFolded:
+        return goto_parent();
+    case PathStateUnfolded:
+        assert(fold() == 1);
+        return UpdScrSignalYes;
+    }
+    return UpdScrSignalNo;
 }
 
 static void quit(void)
@@ -653,7 +666,7 @@ static UpdScrSignal handle_key(struct tb_event ev)
     case TB_KEY_ARROW_UP:
         CONTROL_ACTION(cursor_move(-1));
     case TB_KEY_ARROW_LEFT:
-        CONTROL_ACTION(fold());
+        CONTROL_ACTION(goto_parent_or_fold());
     case TB_KEY_ARROW_RIGHT:
         CONTROL_ACTION(unfold());
     case TB_KEY_ENTER:
