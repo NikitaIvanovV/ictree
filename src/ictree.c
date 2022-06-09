@@ -127,7 +127,7 @@ static int init_termbox(void);
 static int is_search_result(Path *path);
 static int open_file(char *name);
 static int run(void);
-static int setup_signals();
+static int setup_signals(void);
 static int unfold(void);
 static int update_screen(void);
 static UpdScrSignal goto_parent(void);
@@ -742,7 +742,7 @@ static UpdScrSignal handle_mouse_click(int x, int y)
         }                                                 \
     } while (0)
 
-static int setup_signals()
+static int setup_signals(void)
 {
     SETUP_SIGNAL(SIGABRT, catch_error);
     SETUP_SIGNAL(SIGSEGV, catch_error);
@@ -1057,11 +1057,6 @@ int main(int argc, char *argv[])
 
     init_readline_ctx(&search_query);
 
-    if (setup_signals() != 0) {
-        print_error(get_error());
-        return EXIT_FAILURE;
-    }
-
 #ifdef DEV
     debug_file = fopen(DEBUG_FILE, "w");
     if (debug_file == NULL) {
@@ -1082,6 +1077,12 @@ int main(int argc, char *argv[])
 
     sort_lines(lines);
     total_paths_l = get_paths(&paths, lines.lines, lines.lines_l, options.separator, options.init_paths_state);
+
+    if (setup_signals() != 0) {
+        cleanup();
+        print_error(get_error());
+        return EXIT_FAILURE;
+    }
 
 init_tb:
 
