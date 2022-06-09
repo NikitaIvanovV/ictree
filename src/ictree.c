@@ -653,9 +653,9 @@ static UpdScrSignal handle_key(struct tb_event ev)
     case TB_KEY_ARROW_UP:
         CONTROL_ACTION(cursor_move(-1));
     case TB_KEY_ARROW_LEFT:
-        CONTROL_ACTION(scroll_x(-SCROLL_X));
+        CONTROL_ACTION(fold());
     case TB_KEY_ARROW_RIGHT:
-        CONTROL_ACTION(scroll_x(SCROLL_X));
+        CONTROL_ACTION(unfold());
     case TB_KEY_ENTER:
         CONTROL_ACTION(toggle_fold());
     case TB_KEY_CTRL_Z:
@@ -675,6 +675,10 @@ static UpdScrSignal handle_key(struct tb_event ev)
         CONTROL_ACTION(cursor_move(1));
     case 'k':
         CONTROL_ACTION(cursor_move(-1));
+    case '<':
+        CONTROL_ACTION(scroll_x(-SCROLL_X));
+    case '>':
+        CONTROL_ACTION(scroll_x(SCROLL_X));
     case 'h':
         CONTROL_ACTION(scroll_x(-SCROLL_X));
     case 'l':
