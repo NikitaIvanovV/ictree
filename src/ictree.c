@@ -130,11 +130,12 @@ static int run(void);
 static int setup_signals(void);
 static int unfold(void);
 static int update_screen(void);
-static UpdScrSignal goto_parent(void);
 static UpdScrSignal goto_parent_or_fold(void);
+static UpdScrSignal goto_parent(void);
 static UpdScrSignal handle_key(struct tb_event ev);
 static UpdScrSignal handle_mouse_click(int x, int y);
 static UpdScrSignal handle_mouse(struct tb_event ev);
+static UpdScrSignal unfold_or_goto_child(void);
 static void catch_error(int signo);
 static void catch_stop(int signo);
 static void catch_term(int signo);
@@ -150,7 +151,6 @@ static void init_search(int dir);
 static void next_result(int invert_search);
 static void output_path(void);
 static void print_error(char *error_msg);
-static void print_errorf(char *format, ...);
 static void quit_search(void);
 static void quit(void);
 static void reset_prompt_msg(void);
@@ -163,12 +163,13 @@ static void set_default_prompt(void);
 static void set_prompt_color(uint32_t fg, uint32_t bg);
 static void set_prompt_msg(char *msg);
 static void set_prompt_msg_err(char *msg);
-static void set_prompt_msg_errf(char *format, ...);
-static void set_prompt_msgf(char *format, ...);
 static void set_search_prompt(void);
 static void stop(void);
 static void toggle_fold(void);
 static void update_search_query(struct tb_event ev);
+static void print_errorf(char *format, ...);
+static void set_prompt_msg_errf(char *format, ...);
+static void set_prompt_msgf(char *format, ...);
 
 static void print_error(char *error_msg)
 {
@@ -293,9 +294,13 @@ static UpdScrSignal goto_parent(void)
 
 static int unfold(void)
 {
-    if (get_path_from_link(paths.links[cursor_pos])->state == PathStateUnfolded) {
+    Path *p = get_path_from_link(paths.links[cursor_pos]);
+    if (p->state == PathStateUnfolded) {
         return 0;
     }
+
+    if (p->subpaths_l <= 0)
+        return 1;
 
     unfold_path(&paths, cursor_pos);
 
@@ -333,6 +338,23 @@ static UpdScrSignal goto_parent_or_fold(void)
     case PathStateUnfolded:
         assert(fold() == 1);
         return UpdScrSignalYes;
+    }
+    return UpdScrSignalNo;
+}
+
+static UpdScrSignal unfold_or_goto_child(void)
+{
+    Path *p = get_path_from_link(paths.links[cursor_pos]);
+
+    switch (p->state) {
+    case PathStateFolded:
+        assert(unfold() == 1);
+        return UpdScrSignalYes;
+    case PathStateUnfolded:
+        if (p->subpaths_l > 0) {
+            cursor_move(1);
+            return UpdScrSignalYes;
+        }
     }
     return UpdScrSignalNo;
 }
@@ -668,7 +690,7 @@ static UpdScrSignal handle_key(struct tb_event ev)
     case TB_KEY_ARROW_LEFT:
         CONTROL_ACTION(goto_parent_or_fold());
     case TB_KEY_ARROW_RIGHT:
-        CONTROL_ACTION(unfold());
+        CONTROL_ACTION(unfold_or_goto_child());
     case TB_KEY_ENTER:
         CONTROL_ACTION(toggle_fold());
     case TB_KEY_CTRL_Z:
