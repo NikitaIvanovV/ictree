@@ -103,11 +103,11 @@ Move cursor down 1 line
 Move cursor up 1 line
 .PP
 .TP
-.BR l ,\  <Right>
+.BR l ,\  >
 Scroll right
 .PP
 .TP
-.BR h ,\  <Left>
+.BR h ,\  <
 Scroll left
 .PP
 .TP
@@ -162,6 +162,14 @@ Fold selected item and move cursor down 1 line
 .TP
 .BR c
 Go to parent item and fold it
+.PP
+.TP
+.BR <Right>
+If selected item is folded, unfold it; otherwise go to first child item
+.PP
+.TP
+.BR <Left>
+If selected item is unfolded, fold it; otherwise go to parent item
 .PP
 .TP
 .BR /
