@@ -26,6 +26,11 @@ GEN    := ${GENDIR}/help-msg.h
 LIBA   := ${TBARC}
 BINTAR := ${BIN}.tar.gz
 
+VER := $(shell ./version.sh ${INCDIR}/version.h)
+
+SRCTAR := ${BIN}-${VER}.tar.gz
+SRCZIP := ${BIN}-${VER}.zip
+
 vpath %.c ${SRCDIR}
 
 all: ${BIN}
@@ -53,12 +58,10 @@ uninstall:
 	$(RM) $(MANPREFIX)/man1/$(notdir ${MAN})
 
 clean:
-	$(RM) ${BIN} ${OBJ} ${DEP} *.tar.gz *.zip
+	$(RM) ${BIN} ${OBJ} ${DEP} ${BINTAR} ${SRCTAR} ${SRCZIP}
 	$(MAKE) -C ${TBDIR} clean
 
-dist: generate ${BINTAR}
-	./archive.sh tar.gz
-	./archive.sh zip
+dist: ${BINTAR} ${SRCTAR} ${SRCZIP}
 
 .PHONY: all options generate install install.bin \
 	install.man uninstall clean dist
@@ -77,9 +80,12 @@ ${GENDIR}/help-msg.h:
 ${TBARC}:
 	$(MAKE) -C ${TBDIR} libtermbox.a
 
-${BINTAR}: clean
+${BINTAR}: clean generate
 	LDFLAGS=-static $(MAKE) CC=musl-gcc ${BIN}
 	tar -czf $@ ${BIN}
+
+${SRCTAR} ${SRCZIP}: clean generate
+	./archive.sh $@
 
 -include ${DEP}
 

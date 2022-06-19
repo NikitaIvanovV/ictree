@@ -1,6 +1,6 @@
 #!/bin/sh
 
-text="$(MANWIDTH=80 man -P cat -l "$1")" || {
+text="$(MANWIDTH=80 man -l "$1" | col -bx)" || {
     echo 'Error: failed to get man page content' >&2
     exit 1
 }

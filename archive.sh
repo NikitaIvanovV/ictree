@@ -5,14 +5,15 @@ err() {
     exit 1
 }
 
-format="$1"
-[ -z "$format" ] && err "Archive format was not given"
+file="$1"
+[ -z "$file" ] && err "Filename was not given"
 
 list="$(mktemp archive-list.XXXXXX)"
+trap 'rm "$list"' EXIT
 
 git ls-files --full-name --recurse-submodules > "$list"
 
-file="ictree-$(git describe).$format"
+format="${file#*.}"
 
 case "$format" in
     tar.gz)
@@ -22,9 +23,6 @@ case "$format" in
         zip -q "$file" -@ < "$list"
         ;;
     *)
-        rm "$list"
         err "Invalid archive format $format"
         ;;
 esac
-
-rm "$list"
