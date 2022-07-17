@@ -213,11 +213,11 @@ to open a selected path in other programs.
 Examples:
 .EXX
 # open selected path in vim by pressing e
-map e vim $f
+map e vim "$f"
 .PP
 # open selected path in a pager
 # defined in $PAGER environment variable
-map i $PAGER $f
+map i $PAGER "$f"
 .EEE
 .PP
 When a custom command is invoked,
