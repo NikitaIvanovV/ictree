@@ -1,12 +1,3 @@
-.de EXX
-.PP
-.RS
-.EX
-..
-.de EEE
-.EE
-.RE
-..
 .de OP1
 .RB [ "\\$1" ]...
 ..
@@ -56,9 +47,10 @@ Find something with
 .IR locate
 and pipe output into
 .BR ictree :
-.EXX
+.IP
+.EX
 locate something | ictree
-.EEE
+.EE
 .PP
 The same applies to any program that can produce a list of paths.
 For example, one can use
@@ -66,16 +58,18 @@ For example, one can use
 with
 .BR ictree
 to view current working directory in a nice tree-like format:
-.EXX
+.IP
+.EX
 find | ictree
-.EEE
+.EE
 .PP
 .BR ictree
 can also take a file that contains paths as its first argument:
-.EXX
+.IP
+.EX
 locate something > list.txt
 ictree list.txt
-.EEE
+.EE
 .PP
 .BR ictree
 supports
@@ -211,14 +205,15 @@ It's possible to define custom commands in the configuration file (see
 to open a selected path in other programs.
 .PP
 Examples:
-.EXX
+.IP
+.EX
 # open selected path in vim by pressing e
 map e vim "$f"
-.PP
+.IP
 # open selected path in a pager
 # defined in $PAGER environment variable
 map i $PAGER "$f"
-.EEE
+.EE
 .PP
 When a custom command is invoked,
 .BR ictree
