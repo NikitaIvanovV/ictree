@@ -49,15 +49,31 @@
 <section class="Sh">
 <h1 class="Sh" id="EXAMPLES"><a class="permalink" href="#EXAMPLES">EXAMPLES</a></h1>
 <p class="Pp">Find something with <i>locate</i> and pipe output into <b>ictree</b>:</p>
-<p class="Pp"></p>
-<div class="Bd-indent">
-<pre>locate something | ictree </pre> </div> <p class="Pp">The same applies to any program that can produce a list of paths. For example, one can use <i>find</i> with <b>ictree</b> to view current working directory in a nice tree-like format:</p>
-<p class="Pp"></p>
-<div class="Bd-indent">
-<pre>find | ictree </pre> </div> <p class="Pp"><b>ictree</b> can also take a file that contains paths as its first argument:</p>
-<p class="Pp"></p>
-<div class="Bd-indent">
-<pre>locate something &gt; list.txt ictree list.txt </pre> </div> <p class="Pp"><b>ictree</b> supports <i>vi</i>-like search functionality. Extended regular expressions are supported. If a pattern contains <b>/</b> character, the search is performed by full paths of items instead of their short names in the list.</p>
+<dl class="Bl-tag">
+  <dt></dt>
+  <dd>
+    <pre>locate something | ictree
+    </pre>
+  </dd>
+</dl>
+<p class="Pp">The same applies to any program that can produce a list of paths. For example, one can use <i>find</i> with <b>ictree</b> to view current working directory in a nice tree-like format:</p>
+<dl class="Bl-tag">
+  <dt></dt>
+  <dd>
+    <pre>find | ictree
+    </pre>
+  </dd>
+</dl>
+<p class="Pp"><b>ictree</b> can also take a file that contains paths as its first argument:</p>
+<dl class="Bl-tag">
+  <dt></dt>
+  <dd>
+    <pre>locate something &gt; list.txt
+ictree list.txt
+    </pre>
+  </dd>
+</dl>
+<p class="Pp"><b>ictree</b> supports <i>vi</i>-like search functionality. Extended regular expressions are supported. If a pattern contains <b>/</b> character, the search is performed by full paths of items instead of their short names in the list.</p>
 </section>
 <section class="Sh">
 <h1 class="Sh" id="COMMANDS"><a class="permalink" href="#COMMANDS">COMMANDS</a></h1>
@@ -135,9 +151,21 @@
   COMMANDS</a></h1>
 <p class="Pp">It's possible to define custom commands in the configuration file (see <a href="#FILES"><i>FILES</i></a>) to open a selected path in other programs.</p>
 <p class="Pp">Examples:</p>
-<p class="Pp"></p>
-<div class="Bd-indent">
-<pre># open selected path in vim by pressing e map e vim &quot;$f&quot;</pre> <pre># open selected path in a pager # defined in $PAGER environment variable map i $PAGER &quot;$f&quot; </pre> </div> <p class="Pp">When a custom command is invoked, <b>ictree</b> simply runs a program with <i>/bin/sh</i> and sets <b>$f</b> variable to whatever a user has selected.</p>
+<dl class="Bl-tag">
+  <dt></dt>
+  <dd>
+    <pre># open selected path in vim by pressing e
+map e vim &quot;$f&quot;</pre>
+  </dd>
+  <dt></dt>
+  <dd>
+    <pre># open selected path in a pager
+# defined in $PAGER environment variable
+map i $PAGER &quot;$f&quot;
+    </pre>
+  </dd>
+</dl>
+<p class="Pp">When a custom command is invoked, <b>ictree</b> simply runs a program with <i>/bin/sh</i> and sets <b>$f</b> variable to whatever a user has selected.</p>
 <p class="Pp">Note: unlike <i>Vim</i>, it's impossible to use more than one character in a mapping.</p>
 </section>
 <section class="Sh">
