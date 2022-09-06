@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link rel="stylesheet" href="style.css" type="text/css" media="all"/>
+  <title>ICTREE(1)</title>
+</head>
+<body>
+<table class="head">
+  <tr>
+    <td class="head-ltitle">ICTREE(1)</td>
+    <td class="head-vol">General Commands Manual</td>
+    <td class="head-rtitle">ICTREE(1)</td>
+  </tr>
+</table>
+<div class="manual-text">
+<section class="Sh">
+<h1 class="Sh" id="NAME"><a class="permalink" href="#NAME">NAME</a></h1>
+<p class="Pp">ictree - like tree but interactive</p>
+</section>
+<section class="Sh">
+<h1 class="Sh" id="SYNOPSIS"><a class="permalink" href="#SYNOPSIS">SYNOPSIS</a></h1>
+<table class="Nm">
+  <tr>
+    <td><code class="Nm">ictree</code></td>
+    <td>[<b>OPTION</b>]... [<span class="Op"><b>FILE</b>]</span></td>
+  </tr>
+</table>
+</section>
+<section class="Sh">
+<h1 class="Sh" id="DESCRIPTION"><a class="permalink" href="#DESCRIPTION">DESCRIPTION</a></h1>
+<p class="Pp"><b>ictree</b> is a terminal-based program that takes a list of contents of directories and displays them in a pager similar to <i>less</i> where you can fold/unfold directories and quickly jump between them.</p>
+<p class="Pp">It is useful to browse <i>locate</i>,<i>&#x00A0;find</i> or any other program output that is a list of paths.</p>
+</section>
+<section class="Sh">
+<h1 class="Sh" id="OPTIONS"><a class="permalink" href="#OPTIONS">OPTIONS</a></h1>
+<dl class="Bl-tag">
+  <dt id="fold"><a class="permalink" href="#fold"><b>--fold</b>,&#x00A0;<b>-f</b></a></dt>
+  <dd>Fold directories by default.</dd>
+  <dt id="separator=_C_"><a class="permalink" href="#separator=_C_"><b>--separator=&lt;C&gt;</b>,&#x00A0;<b>-s&#x00A0;&lt;C&gt;</b></a></dt>
+  <dd>Set directory separator to C. <b>/</b> is the default value.</dd>
+  <dt id="help"><a class="permalink" href="#help"><b>--help</b>,&#x00A0;<b>-h</b></a></dt>
+  <dd>Print a help message and exit.</dd>
+  <dt id="version"><a class="permalink" href="#version"><b>--version</b>,&#x00A0;<b>-v</b></a></dt>
+  <dd>Display version information and exit.</dd>
+</dl>
+</section>
+<section class="Sh">
+<h1 class="Sh" id="EXAMPLES"><a class="permalink" href="#EXAMPLES">EXAMPLES</a></h1>
+<p class="Pp">Find something with <i>locate</i> and pipe output into <b>ictree</b>:</p>
+<p class="Pp"></p>
+<div class="Bd-indent">
+<pre>locate something | ictree </pre> </div> <p class="Pp">The same applies to any program that can produce a list of paths. For example, one can use <i>find</i> with <b>ictree</b> to view current working directory in a nice tree-like format:</p>
+<p class="Pp"></p>
+<div class="Bd-indent">
+<pre>find | ictree </pre> </div> <p class="Pp"><b>ictree</b> can also take a file that contains paths as its first argument:</p>
+<p class="Pp"></p>
+<div class="Bd-indent">
+<pre>locate something &gt; list.txt ictree list.txt </pre> </div> <p class="Pp"><b>ictree</b> supports <i>vi</i>-like search functionality. Extended regular expressions are supported. If a pattern contains <b>/</b> character, the search is performed by full paths of items instead of their short names in the list.</p>
+</section>
+<section class="Sh">
+<h1 class="Sh" id="COMMANDS"><a class="permalink" href="#COMMANDS">COMMANDS</a></h1>
+<p class="Pp">All the commands for moving in the pager resemble <i>less</i> and <i>vi</i> commands.</p>
+<section class="Ss">
+<h2 class="Ss" id="MOVING"><a class="permalink" href="#MOVING">MOVING</a></h2>
+<dl class="Bl-tag">
+  <dt id="j"><a class="permalink" href="#j"><b>j</b>,&#x00A0;<b>&lt;Down&gt;</b></a></dt>
+  <dd>Move cursor down 1 line</dd>
+  <dt id="k"><a class="permalink" href="#k"><b>k</b>,&#x00A0;<b>&lt;Up&gt;</b></a></dt>
+  <dd>Move cursor up 1 line</dd>
+  <dt id="l"><a class="permalink" href="#l"><b>l</b>,&#x00A0;<b>&gt;</b></a></dt>
+  <dd>Scroll right</dd>
+  <dt id="h"><a class="permalink" href="#h"><b>h</b>,&#x00A0;<b>&lt;</b></a></dt>
+  <dd>Scroll left</dd>
+  <dt><b>^E</b>,&#x00A0;<b>&lt;Mouse&#x00A0;Wheel&#x00A0;Down&gt;</b></dt>
+  <dd>Scroll down one line</dd>
+  <dt><b>^Y</b>,&#x00A0;<b>&lt;Mouse&#x00A0;Wheel&#x00A0;Up&gt;</b></dt>
+  <dd>Scroll up one line</dd>
+  <dt><b>^D</b></dt>
+  <dd>Scroll down half-window</dd>
+  <dt><b>^U</b></dt>
+  <dd>Scroll up half-window</dd>
+  <dt><b>^F</b></dt>
+  <dd>Scroll down one window</dd>
+  <dt><b>^B</b></dt>
+  <dd>Scroll up one window</dd>
+  <dt id="g"><a class="permalink" href="#g"><b>g</b></a></dt>
+  <dd>Move cursor to the top</dd>
+  <dt id="G"><a class="permalink" href="#G"><b>G</b></a></dt>
+  <dd>Move cursor to the bottom</dd>
+  <dt id="z"><a class="permalink" href="#z"><b>z</b></a></dt>
+  <dd>Put cursor at the center of window</dd>
+  <dt id="p"><a class="permalink" href="#p"><b>p</b></a></dt>
+  <dd>Go to parent item</dd>
+</dl>
+</section>
+<section class="Ss">
+<h2 class="Ss" id="OTHERS"><a class="permalink" href="#OTHERS">OTHERS</a></h2>
+<dl class="Bl-tag">
+  <dt><b>&lt;Enter&gt;</b>,&#x00A0;<b>&lt;Mouse&#x00A0;Left&#x00A0;Button&gt;</b></dt>
+  <dd>Fold/unfold selected item</dd>
+  <dt><b>&lt;Space&gt;</b></dt>
+  <dd>Fold selected item and move cursor down 1 line</dd>
+  <dt id="c"><a class="permalink" href="#c"><b>c</b></a></dt>
+  <dd>Go to parent item and fold it</dd>
+  <dt><b>&lt;Right&gt;</b></dt>
+  <dd>If selected item is folded, unfold it; otherwise go to first child
+    item</dd>
+  <dt><b>&lt;Left&gt;</b></dt>
+  <dd>If selected item is unfolded, fold it; otherwise go to parent item</dd>
+  <dt><b>/</b></dt>
+  <dd>Search forward for pattern</dd>
+  <dt><b>?</b></dt>
+  <dd>Search backward for pattern</dd>
+  <dt id="n"><a class="permalink" href="#n"><b>n</b></a></dt>
+  <dd>Repeat previous search</dd>
+  <dt id="N"><a class="permalink" href="#N"><b>N</b></a></dt>
+  <dd>Repeat previous search in reverse direction</dd>
+  <dt id="y"><a class="permalink" href="#y"><b>y</b></a></dt>
+  <dd>Copy selected item into X or Wayland clipboard (using this command
+      requires <i>xsel</i>&#x00A0;or&#x00A0;<i>wl-copy</i> installed, depending
+      on which display server is used)</dd>
+  <dt id="o"><a class="permalink" href="#o"><b>o</b></a></dt>
+  <dd>Write selected item to standard output and exit</dd>
+  <dt id="q"><a class="permalink" href="#q"><b>q</b>,<b>&#x00A0;&lt;Esc&gt;</b></a></dt>
+  <dd>Quit</dd>
+  <dt><b>^Z</b></dt>
+  <dd>Suspend ictree</dd>
+</dl>
+</section>
+</section>
+<section class="Sh">
+<h1 class="Sh" id="CUSTOM_COMMANDS"><a class="permalink" href="#CUSTOM_COMMANDS">CUSTOM
+  COMMANDS</a></h1>
+<p class="Pp">It's possible to define custom commands in the configuration file (see <a href="#FILES"><i>FILES</i></a>) to open a selected path in other programs.</p>
+<p class="Pp">Examples:</p>
+<p class="Pp"></p>
+<div class="Bd-indent">
+<pre># open selected path in vim by pressing e map e vim &quot;$f&quot;</pre> <pre># open selected path in a pager # defined in $PAGER environment variable map i $PAGER &quot;$f&quot; </pre> </div> <p class="Pp">When a custom command is invoked, <b>ictree</b> simply runs a program with <i>/bin/sh</i> and sets <b>$f</b> variable to whatever a user has selected.</p>
+<p class="Pp">Note: unlike <i>Vim</i>, it's impossible to use more than one character in a mapping.</p>
+</section>
+<section class="Sh">
+<h1 class="Sh" id="FILES"><a class="permalink" href="#FILES">FILES</a></h1>
+<dl class="Bl-tag">
+  <dt><b>$XDG_CONFIG_HOME/ictree/config</b></dt>
+  <dd>Configuration file. If <b>$XDG_CONFIG_HOME</b> is not defined,
+      <b>$HOME/.config</b> is used instead.</dd>
+</dl>
+</section>
+<section class="Sh">
+<h1 class="Sh" id="SEE_ALSO"><a class="permalink" href="#SEE_ALSO">SEE
+  ALSO</a></h1>
+<p class="Pp">tree(1), find(1), locate(1), less(1)</p>
+</section>
+<section class="Sh">
+<h1 class="Sh" id="AUTHOR"><a class="permalink" href="#AUTHOR">AUTHOR</a></h1>
+<p class="Pp">Written by Nikita Ivanov.</p>
+</section>
+</div>
+<table class="foot">
+  <tr>
+    <td class="foot-date"></td>
+    <td class="foot-os"></td>
+  </tr>
+</table>
+</body>
+</html>
