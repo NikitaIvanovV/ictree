@@ -65,7 +65,8 @@ You can define custom commands in a configuration file to open selected path in 
 map e $EDITOR "$f"
 ```
 
-Please read the manual (`man ictree`) for more details on existing commands and options.
+Please read the manual (`man ictree`) for more details on existing commands and options:
+https://nikitaivanovv.github.io/ictree
 
 ## License
 
