@@ -1,53 +1,62 @@
-.TH ICTREE 1
+.TH ICTREE 1 2022 Linux
 .
 .SH NAME
-ictree - like tree but interactive
+.
+ictree \- like tree but interactive
 .
 .SH SYNOPSIS
+.
 .SY ictree
 .RI [ option
-\&.\|.\|.\&]
+\&.\|.\|.]
 .I file
 .YS
 .
 .SH DESCRIPTION
+.
 .BR ictree
 is a terminal-based program that takes a list of contents of directories and displays them in a pager similar to
 .IR less
 where you can fold/unfold directories and quickly jump between them.
+.
 .PP
 It is useful to browse
 .IR locate , \ find
 or any other program output that is a list of paths.
 .
 .SH OPTIONS
+.
 .TP
-.BR \-\-fold ,\  \-f
+.BR \-\-fold ", " \-f
 Fold directories by default.
-.PP
+.
 .TP
-.BR \-\-separator=<C> ,\  \-s\ <C>
-Set directory separator to C.
-.B /
+\fB\-\-separator=\fP\fIC\fP, \fB\-s\fP\fIC\fP
+Set directory separator to
+.IR C .
+.RB \(oq / \(cq
 is the default value.
-.PP
+.
 .TP
-.BR \-\-help ,\  \-h
+.BR \-\-help ", " \-h
 Print a help message and exit.
-.PP
+.
 .TP
-.BR \-\-version ,\  \-v
+.BR \-\-version ", " \-v
 Display version information and exit.
 .
 .SH EXAMPLES
+.
 Find something with
-.IR locate
+.I locate
 and pipe output into
 .BR ictree :
+.
 .IP
 .EX
 locate something | ictree
 .EE
+.
 .PP
 The same applies to any program that can produce a list of paths.
 For example, one can use
@@ -55,187 +64,222 @@ For example, one can use
 with
 .BR ictree
 to view current working directory in a nice tree-like format:
+.
 .IP
 .EX
 find | ictree
 .EE
+.
 .PP
 .BR ictree
 can also take a file that contains paths as its first argument:
+.
 .IP
 .EX
 locate something > list.txt
 ictree list.txt
 .EE
+.
 .PP
 .BR ictree
 supports
-.IR vi -like
+.IR Vi -like
 search functionality.
 Extended regular expressions are supported.
 If a pattern contains
-.B /
+.RB \(oq / \(cq
 character, the search is performed by full paths of items instead of their short names in the list.
 .
 .SH COMMANDS
+.
 All the commands for moving in the pager resemble
-.IR less
+.I less
 and
-.IR vi
+.I Vi
 commands.
 .
-.SS MOVING
+.SS Moving
+.
 .TP
-.BR j ,\  <Down>
+.B j
+.TQ
+.B <Down>
 Move cursor down 1 line
-.PP
+.
 .TP
-.BR k ,\  <Up>
+.B k
+.TQ
+.B <Up>
 Move cursor up 1 line
-.PP
+.
 .TP
-.BR l ,\  >
+.B l
+.TQ
+.B >
 Scroll right
-.PP
+.
 .TP
-.BR h ,\  <
+.B h
+.TQ
+.B <
 Scroll left
-.PP
+.
 .TP
-.BR ^E ,\  <Mouse\ Wheel\ Down>
+.B \(haE
+.TQ
+.B "<Mouse Wheel Down>"
 Scroll down one line
-.PP
+.
 .TP
-.BR ^Y ,\  <Mouse\ Wheel\ Up>
+.B \(haY
+.TQ
+.B "<Mouse Wheel Up>"
 Scroll up one line
-.PP
+.
 .TP
-.BR ^D
+.B \(haD
 Scroll down half-window
-.PP
+.
 .TP
-.BR ^U
+.B \(haU
 Scroll up half-window
-.PP
+.
 .TP
-.BR ^F
+.B \(haF
 Scroll down one window
-.PP
+.
 .TP
-.BR ^B
+.B \(haB
 Scroll up one window
-.PP
+.
 .TP
-.BR g
+.B g
 Move cursor to the top
-.PP
+.
 .TP
-.BR G
+.B G
 Move cursor to the bottom
-.PP
+.
 .TP
-.BR z
+.B z
 Put cursor at the center of window
-.PP
+.
 .TP
-.BR p
+.B p
 Go to parent item
 .
-.SS OTHERS
+.SS Others
+.
 .TP
-.BR <Enter> ,\  <Mouse\ Left\ Button>
+.B <Enter>
+.TQ
+.B "<Mouse Left Button>"
 Fold/unfold selected item
-.PP
+.
 .TP
-.BR <Space>
+.B <Space>
 Fold selected item and move cursor down 1 line
-.PP
+.
 .TP
-.BR c
+.B c
 Go to parent item and fold it
-.PP
+.
 .TP
-.BR <Right>
+.B <Right>
 If selected item is folded, unfold it; otherwise go to first child item
-.PP
+.
 .TP
-.BR <Left>
+.B <Left>
 If selected item is unfolded, fold it; otherwise go to parent item
-.PP
+.
 .TP
-.BR /
+.B /
 Search forward for pattern
-.PP
+.
 .TP
-.BR ?
+.B ?
 Search backward for pattern
-.PP
+.
 .TP
-.BR n
+.B n
 Repeat previous search
-.PP
+.
 .TP
-.BR N
+.B N
 Repeat previous search in reverse direction
-.PP
+.
 .TP
-.BR y
+.B y
 Copy selected item into X or Wayland clipboard (using this command requires
-.IR xsel \ or\  wl-copy
+.I xsel
+or
+.I wl-copy
 installed, depending on which display server is used)
-.PP
+.
 .TP
-.BR o
+.B o
 Write selected item to standard output and exit
-.PP
+.
 .TP
-.BR q , \ <Esc>
+.B q
+.TQ
+.B <Esc>
 Quit
-.PP
+.
 .TP
-.BR ^Z
+.B \(haZ
 Suspend ictree
 .
 .SH CUSTOM COMMANDS
+.
 It's possible to define custom commands in the configuration file (see
 .IR FILES )
 to open a selected path in other programs.
+.
 .PP
 Examples:
+.
 .IP
 .EX
 # open selected path in vim by pressing e
 map e vim "$f"
-.IP
+\~
 # open selected path in a pager
 # defined in $PAGER environment variable
 map i $PAGER "$f"
 .EE
+.
 .PP
 When a custom command is invoked,
-.BR ictree
+.B ictree
 simply runs a program with
-.IR /bin/sh
+.I /bin/sh
 and sets
-.BR $f
+.B $f
 variable to whatever a user has selected.
+.
 .PP
 Note: unlike
 .IR Vim ,
 it's impossible to use more than one character in a mapping.
 .
 .SH FILES
+.
 .TP
 .B $XDG_CONFIG_HOME/ictree/config
 Configuration file.
 If
-.B $XDG_CONFIG_HOME
-is not defined,
-.B $HOME/.config
-is used instead.
+.I $XDG_CACHE_HOME
+is not set, defaults to
+.IR \(ti/.cache .
 .
 .SH SEE ALSO
-tree(1), find(1), locate(1), less(1)
+.
+.BR tree (1),
+.BR find (1),
+.BR locate (1),
+.BR less (1)
 .
 .SH AUTHOR
+.
 Written by Nikita Ivanov.
