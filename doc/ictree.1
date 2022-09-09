@@ -14,9 +14,9 @@ ictree \- like tree but interactive
 .
 .SH DESCRIPTION
 .
-.BR ictree
+.B ictree
 is a terminal-based program that takes a list of contents of directories and displays them in a pager similar to
-.IR less
+.I less
 where you can fold/unfold directories and quickly jump between them.
 .
 .PP
@@ -60,9 +60,9 @@ locate something | ictree
 .PP
 The same applies to any program that can produce a list of paths.
 For example, one can use
-.IR find
+.I find
 with
-.BR ictree
+.B ictree
 to view current working directory in a nice tree-like format:
 .
 .IP
@@ -71,7 +71,7 @@ find | ictree
 .EE
 .
 .PP
-.BR ictree
+.B ictree
 can also take a file that contains paths as its first argument:
 .
 .IP
@@ -81,7 +81,7 @@ ictree list.txt
 .EE
 .
 .PP
-.BR ictree
+.B ictree
 supports
 .IR Vi -like
 search functionality.
