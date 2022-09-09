@@ -1,4 +1,4 @@
-.TH ICTREE 1 2022 Linux
+.TH ICTREE 1 2022 Linux "User's Reference Manuals"
 .
 .SH NAME
 .
@@ -243,7 +243,7 @@ Examples:
 .EX
 # open selected path in vim by pressing e
 map e vim "$f"
-\~
+.sp
 # open selected path in a pager
 # defined in $PAGER environment variable
 map i $PAGER "$f"
@@ -266,12 +266,12 @@ it's impossible to use more than one character in a mapping.
 .SH FILES
 .
 .TP
-.B $XDG_CONFIG_HOME/ictree/config
+.I $XDG_CONFIG_HOME/ictree/config
 Configuration file.
 If
-.I $XDG_CACHE_HOME
+.I $XDG_CONFIG_HOME
 is not set, defaults to
-.IR \(ti/.cache .
+.IR \(ti/.config .
 .
 .SH SEE ALSO
 .
