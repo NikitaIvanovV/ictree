@@ -25,6 +25,14 @@ Uninstall with `sudo make uninstall`
 *Warning: don't forget to add `--recursive` option to `git clone` command!
 Otherwise, you will get `No such file or directory` errors while compiling.*
 
+### Alpine Linux
+
+If you are an Alpine Linux user, you can install [`ictree`](https://pkgs.alpinelinux.org/packages?name=ictree) package (available in Alpine v3.17+ and in Edge).
+
+```sh
+apk add ictree
+```
+
 ### AUR
 
 If you are an Arch Linux user, you can install [`ictree`](https://aur.archlinux.org/packages/ictree/) AUR package.
