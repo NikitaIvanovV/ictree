@@ -680,8 +680,10 @@ static UpdScrSignal handle_key(struct tb_event ev)
     case TB_KEY_CTRL_U:
         CONTROL_ACTION(scroll_y(-TREE_VIEW_Y / 2));
     case TB_KEY_CTRL_F:
+    case TB_KEY_PGDN:
         CONTROL_ACTION(scroll_y(TREE_VIEW_Y));
     case TB_KEY_CTRL_B:
+    case TB_KEY_PGUP:
         CONTROL_ACTION(scroll_y(-TREE_VIEW_Y));
     case TB_KEY_ARROW_DOWN:
         CONTROL_ACTION(cursor_move(1));
@@ -691,6 +693,10 @@ static UpdScrSignal handle_key(struct tb_event ev)
         CONTROL_ACTION(goto_parent_or_fold());
     case TB_KEY_ARROW_RIGHT:
         CONTROL_ACTION(unfold_or_goto_child());
+    case TB_KEY_HOME:
+        CONTROL_ACTION(cursor_set(0));
+    case TB_KEY_END:
+        CONTROL_ACTION(cursor_set(MAX_PATHS - 1));
     case TB_KEY_ENTER:
         CONTROL_ACTION(toggle_fold());
     case TB_KEY_CTRL_Z:
