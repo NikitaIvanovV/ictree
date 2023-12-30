@@ -23,7 +23,6 @@ OBJ    := ${SRC:${SRCDIR}/%.c=${BUILDDIR}/%.o}
 DEP    := ${OBJ:.o=.d}
 MAN    := ${DOCDIR}/ictree.1
 GEN    := ${GENDIR}/help-msg.h
-LIBA   := ${TBARC}
 BINTAR := ${BIN}.tar.gz
 
 VER := $(shell ./version.sh ${INCDIR}/version.h)
@@ -59,14 +58,13 @@ uninstall:
 
 clean:
 	$(RM) ${BIN} ${OBJ} ${DEP} ${BINTAR} ${SRCTAR} ${SRCZIP}
-	$(MAKE) -C ${TBDIR} clean
 
 dist: ${BINTAR} ${SRCTAR} ${SRCZIP}
 
 .PHONY: all options generate install install.bin \
 	install.man uninstall clean dist
 
-${BIN}: ${OBJ} ${LIBA}
+${BIN}: ${OBJ}
 	$(CC) -o $@ $(LDFLAGS) $+
 
 ${BUILDDIR}/%.o: %.c
@@ -76,9 +74,6 @@ ${BUILDDIR}/%.o: %.c
 ${GENDIR}/help-msg.h:
 	@mkdir -p ${@D}
 	./gen-help.sh ${MAN} > $@
-
-${TBARC}:
-	$(MAKE) -C ${TBDIR} libtermbox.a
 
 ${BINTAR}: clean generate
 	LDFLAGS=-static $(MAKE) CC=musl-gcc ${BIN}

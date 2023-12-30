@@ -25,7 +25,6 @@ endif
 
 # Termbox2 lib
 TBDIR  := ${LIBDIR}/termbox2
-TBARC  := ${TBDIR}/libtermbox.a
 CFLAGS += -I${TBDIR}
 
 # c_vector lib
