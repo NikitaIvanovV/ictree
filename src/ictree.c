@@ -22,8 +22,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/wait.h>
-#include <termbox.h>
 #include <unistd.h>
+
+#define TB_IMPL
+#include <termbox2.h>
 
 #include "args.h"
 #include "config.h"
