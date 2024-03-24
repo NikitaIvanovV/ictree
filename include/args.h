@@ -20,6 +20,7 @@
 #define ARGS_H
 
 #include "paths.h"
+#include "lines.h"
 
 enum ArgAction {
     ArgActionDefault,
@@ -31,6 +32,7 @@ enum ArgAction {
 typedef struct Options {
     char *filename;
     PathState init_paths_state;
+    LinesState init_lines_state;
     char separator;
 } Options;
 

@@ -24,6 +24,11 @@
 
 #define LINE_DELIM '\n'
 
+typedef enum LinesState {
+    LinesStateUnsorted,
+    LinesStateSorted
+} LinesState;
+
 typedef struct Lines {
     char **lines;
     size_t lines_l;
