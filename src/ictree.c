@@ -229,6 +229,7 @@ static void init_options(void)
 {
     options.filename = NULL;
     options.init_paths_state = PathStateUnfolded;
+    options.init_lines_state = LinesStateUnsorted;
     options.separator = '/';
 }
 
@@ -1116,7 +1117,10 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
 
-    sort_lines(lines);
+    if (options.init_lines_state == LinesStateSorted) {
+        sort_lines(lines);
+    }
+
     total_paths_l = get_paths(&paths, lines.lines, lines.lines_l, options.separator, options.init_paths_state);
 
     if (setup_signals() != 0) {

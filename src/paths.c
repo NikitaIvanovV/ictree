@@ -185,10 +185,13 @@ void unfold_nested_path(UnfoldedPaths *unfolded_paths, Path *path, size_t *pos)
     cvector_free(queue);
 }
 
-static char *get_full_path(PathLink *links, size_t links_l, char *line)
+static char *get_full_path(PathLink *links, size_t links_l, char *line, char separator)
 {
     unsigned long i;
     unsigned long str_l;
+    char separator_str[] = "/";
+
+    separator_str[0] = separator;
 
     str_l = 0;
     for (i = 0; i < links_l; i++) {
@@ -197,7 +200,7 @@ static char *get_full_path(PathLink *links, size_t links_l, char *line)
     }
 
     if (strlen(line) == 0)
-        line = "/";
+        line = separator_str;
 
     str_l += strlen(line);
 
@@ -205,7 +208,7 @@ static char *get_full_path(PathLink *links, size_t links_l, char *line)
 
     for (i = 0; i < links_l; i++) {
         strncat(str, get_path_from_link(links[i])->line, str_l);
-        strncat(str, "/", str_l);
+        strncat(str, separator_str, str_l);
     }
 
     strncat(str, line, str_l);
@@ -322,7 +325,7 @@ size_t get_paths(UnfoldedPaths *unfolded_paths, char **lines, size_t lines_l, ch
             cvector_push_back(unfolded_paths->links, pl);
         }
 
-        p.full_path = get_full_path(stack, cvector_size(stack), p.line);
+        p.full_path = get_full_path(stack, cvector_size(stack), p.line, separator);
 
         cvector_push_back(stack, pl);
         cvector_push_back(paths, p);

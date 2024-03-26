@@ -4,7 +4,9 @@
 "Options:" "\n" \
 "       --fold, -f" "\n" \
 "              Fold directories by default." "\n" \
-"       --separator=<C>, -s <C>" "\n" \
+"       --sort, -s" "\n" \
+"              Display sorted entries." "\n" \
+"       --delimiter=<C>, -d <C>" "\n" \
 "              Set directory separator to C.  / is the default value." "\n" \
 "       --help, -h" "\n" \
 "              Print a help message and exit." "\n" \

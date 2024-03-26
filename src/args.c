@@ -21,6 +21,7 @@
 #include <string.h>
 
 #include "args.h"
+#include "lines.h"
 #include "error.h"
 #include "version.h"
 
@@ -32,13 +33,14 @@
 
 static struct option long_opts[] = {
     { "fold",       no_argument,        NULL,  'f' },
-    { "separator",  required_argument,  NULL,  's' },
+    { "sort",       no_argument,        NULL,  's' },
+    { "delimiter",  required_argument,  NULL,  'd' },
     { "version",    no_argument,        NULL,  'v' },
     { "help",       no_argument,        NULL,  'h' },
     { 0,            0,                  NULL,  0   },
 };
 
-#define SHORT_OPTIONS "fs:vh"
+#define SHORT_OPTIONS "fsd:vh"
 
 enum ArgAction process_args(Options *options, int argc, char **argv)
 {
@@ -57,6 +59,9 @@ enum ArgAction process_args(Options *options, int argc, char **argv)
             options->init_paths_state = PathStateFolded;
             break;
         case 's':
+            options->init_lines_state = LinesStateSorted;
+            break;
+        case 'd':
             if (strlen(optarg) != 1) {
                 set_error("directory separator must a single character");
                 return ArgActionErrorReport;
