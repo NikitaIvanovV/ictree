@@ -229,6 +229,7 @@ static void init_options(void)
 {
     options.filename = NULL;
     options.init_paths_state = PathStateUnfolded;
+    options.init_lines_state = LinesStateUnsorted;
     options.separator = '/';
 }
 
